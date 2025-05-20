@@ -1,0 +1,8 @@
+{
+  "name": "SunCloud Plant Monitor",
+  "content_in_root": false,
+  "domain": "suncloud_monitor",
+  "country": "🌐",
+  "homeassistant": "2022.0.0",
+  "render_readme": true
+}
