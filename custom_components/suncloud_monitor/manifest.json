@@ -1,0 +1,10 @@
+{
+  "domain": "suncloud_monitor",
+  "name": "SunCloud Plant Monitor",
+  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/jsanchezdelvillar/suncloud_monitor",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@jsanchezdelvillar"]
+}
