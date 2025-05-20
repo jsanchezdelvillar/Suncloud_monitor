@@ -1,0 +1,17 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure SunCloud Monitor",
+        "description": "Enter your API credentials and settings.",
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "base_url": "Base URL",
+          "poll_interval": "Poll interval (minutes)"
+        }
+      }
+    }
+  },
+  "title": "SunCloud Plant Monitor"
+}
