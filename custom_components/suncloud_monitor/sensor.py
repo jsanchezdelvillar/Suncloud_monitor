@@ -16,6 +16,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(sensors, update_before_add=True)
 
 
+ICON_MAP = {
+    "83022": "mdi:lightning-bolt",        # total yield
+    "83033": "mdi:flash",                 # current power
+    "83034": "mdi:solar-power",           # daily energy
+    "83053": "mdi:currency-cny",          # income
+    "83035": "mdi:clock",                 # equivalent hours
+    "83038": "mdi:co2",                   # CO2 reduction
+    "83040": "mdi:thermometer",           # ambient temp
+    "83046": "mdi:gauge",                 # voltage
+    "83047": "mdi:current-ac",            # current
+}
+
 class SunCloudSensor(Entity):
     """Representation of a SunCloud sensor."""
 
@@ -23,6 +35,7 @@ class SunCloudSensor(Entity):
         self._attr_name = f"Plant Point {point_id}"
         self._attr_unique_id = f"suncloud_point_{point_id}"
         self._point_id = point_id
+        self._attr_icon = ICON_MAP.get(point_id, "mdi:gauge")  # default fallback
 
     @property
     def state(self):
@@ -40,5 +53,24 @@ class SunCloudSensor(Entity):
         return False
 
     async def async_update(self):
-        """No-op: data pushed by API."""
         pass
+    
+    @property
+    def device_class(self):
+        if self.unit_of_measurement in ["kWh", "Wh"]:
+            return "energy"
+        if self.unit_of_measurement in ["W"]:
+            return "power"
+        if self.unit_of_measurement in ["A"]:
+            return "current"
+        if self.unit_of_measurement in ["V"]:
+            return "voltage"
+        return None
+
+    @property
+    def state_class(self):
+        return "measurement"
+
+    @property
+    def entity_registry_enabled_default(self):
+        return True
