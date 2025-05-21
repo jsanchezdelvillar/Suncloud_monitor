@@ -2,16 +2,27 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure SunCloud Monitor",
-        "description": "Enter your API credentials and settings.",
+        "title": "Configure Suncloud Monitor",
+        "description": "Enter your credentials and connection details.",
         "data": {
-          "username": "Username",
+          "username": "User Account",
           "password": "Password",
-          "base_url": "Base URL",
-          "poll_interval": "Poll interval (minutes)"
+          "appkey": "App Key",
+          "sung_secret": "Access Secret",
+          "RSA_public": "RSA Public Key (Base64 DER)",
+          "ps_key": "Plant Key (ps_key)",
+          "base_url": "API Base URL",
+          "poll_interval": "Polling Interval (min)"
         }
       }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Failed to connect to server",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "single_instance_allowed": "Only one instance allowed."
     }
-  },
-  "title": "SunCloud Plant Monitor"
+  }
 }
