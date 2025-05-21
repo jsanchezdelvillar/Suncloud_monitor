@@ -1,0 +1,7 @@
+- alias: "Suncloud Monitor – Update Data"
+  id: suncloud_monitor_update
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  action:
+    - service: pyscript.update_device_data_RSA
