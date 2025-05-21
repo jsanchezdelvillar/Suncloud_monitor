@@ -1,0 +1,11 @@
+telemetry_points:
+  name: Telemetry Points
+  options:
+    - 83022
+    - 83033
+    - 83025
+    - 83102
+    - 83072
+    - 83106
+  initial: 83022
+  icon: mdi:chart-line
