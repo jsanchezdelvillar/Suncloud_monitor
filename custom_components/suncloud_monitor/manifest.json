@@ -1,10 +1,15 @@
 {
   "domain": "suncloud_monitor",
-  "name": "SunCloud Plant Monitor",
+  "name": "Suncloud Monitor",
   "version": "1.0.0",
-  "config_flow": true,
-  "documentation": "https://github.com/jsanchezdelvillar/suncloud_monitor",
-  "requirements": [],
+  "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
+  "issue_tracker": "https://github.com/jsanchezdelvillar/Suncloud_monitor/issues",
   "dependencies": [],
-  "codeowners": ["@jsanchezdelvillar"]
+  "codeowners": ["@jsanchezdelvillar"],
+  "requirements": [
+    "cryptography>=42.0.0"
+  ],
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "loggers": ["suncloud_monitor"]
 }
