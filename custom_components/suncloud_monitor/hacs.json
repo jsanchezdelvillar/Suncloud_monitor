@@ -6,5 +6,6 @@
   "requirements": [
     "cryptography>=42.0.0"
   ],
-  "iot_class": "cloud_polling"
+  "iot_class": "cloud_polling",
+  "version": "1.0.0"
 }
