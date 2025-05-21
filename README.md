@@ -1,24 +1,55 @@
-# SunCloud Monitor for Home Assistant
+# 🌞 Suncloud Monitor – Home Assistant Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/docs/faq/custom_repositories) 
-[![GitHub Stars](https://img.shields.io/github/stars/jsanchezdelvillar/Suncloud_monitor?style=flat-square)](https://github.com/jsanchezdelvillar/Suncloud_monitor/stargazers)
-[![Latest Release](https://img.shields.io/github/v/release/jsanchezdelvillar/Suncloud_monitor?style=flat-square)](https://github.com/jsanchezdelvillar/Suncloud_monitor/releases)
-[![License](https://img.shields.io/github/license/jsanchezdelvillar/Suncloud_monitor?style=flat-square)](https://github.com/jsanchezdelvillar/Suncloud_monitor/blob/main/LICENSE)
+![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)
+![license](https://img.shields.io/github/license/jsanchezdelvillar/Suncloud_monitor)
+![version](https://img.shields.io/github/v/tag/jsanchezdelvillar/Suncloud_monitor)
 
-This custom integration allows real-time monitoring of Sungrow (Sunshine Cloud) plants via open API endpoints.  
-🧠 Includes token-based auth, ps_key retrieval, plant + device discovery, real-time polling, and automatic recovery.
+A Home Assistant integration to monitor **Sungrow Suncloud** plants using secure **RSA & AES**-encrypted API calls.
 
-## Features
+---
 
-- Login + token management
-- ps_key, device_sn, plant ID discovery
-- `getDeviceRealTimeData` support
-- Sensor + input_select entities
-- Configurable via UI
+## 🔐 Features
 
-## Setup
+- Secure login using public RSA key
+- Real-time telemetry data from your plant (power, yield, energy)
+- Configurable via Home Assistant UI
+- Supports `input_select` to enable/disable telemetry points
+- Full HACS support
+- Built-in automation polling + statistics
 
-1. Drop into `custom_components/`
-2. Restart HA
-3. Go to **Settings > Devices & Services > Add Integration**
-4. Search for `SunCloud Monitor` and enter credentials
+---
+
+## 🧩 Installation
+
+1. Copy this repo to:  
+   `/config/custom_components/suncloud_monitor/`
+2. Restart Home Assistant
+3. Add via **Settings → Devices & Services → + Add Integration**
+4. Enter your:
+   - Sungrow account credentials
+   - AppKey, access key, RSA public key (base64 DER)
+   - Your `ps_key` (plant ID)
+
+---
+
+## 📡 Available Sensors
+
+| Sensor | Icon | Device Class | Unit |
+|--------|------|--------------|------|
+| Daily Yield | 🔋 `mdi:transmission-tower` | `energy` | `Wh` |
+| Current Power | ⚡ `mdi:flash` | `power` | `W` |
+| Energy Fed In / Purchased | ↔️ | `energy` | `Wh` |
+| Load Power | ⚡ | `power` | `W` |
+| Self Sufficiency % | 📊 | - | `%` |
+
+---
+
+## 📦 Configuration (optional)
+
+### `secrets.yaml`
+```yaml
+suncloud_username: your@email.com
+suncloud_password: yourpassword
+suncloud_appkey: your_app_key
+suncloud_secret: your_secret_key
+suncloud_rsa_key: base64_RSA_key
