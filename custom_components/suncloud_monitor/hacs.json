@@ -3,9 +3,9 @@
   "domain": "suncloud_monitor",
   "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
   "codeowners": ["@jsanchezdelvillar"],
-  "requirements": [],
+  "requirements": [
+    "cryptography>=42.0.0"
+  ],
   "iot_class": "cloud_polling",
-  "description": "Home Assistant integration for Sungrow Suncloud API using secure RSA/AES encryption.",
-  "render_readme": true,
-  "homeassistant": "2023.9.0"
+  "render_readme": true
 }
