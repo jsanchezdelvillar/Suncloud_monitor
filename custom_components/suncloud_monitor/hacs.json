@@ -6,6 +6,5 @@
   "requirements": [
     "cryptography>=42.0.0"
   ],
-  "iot_class": "cloud_polling",
-  "render_readme": true
+  "iot_class": "cloud_polling"
 }
