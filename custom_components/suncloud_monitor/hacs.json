@@ -1,12 +1,11 @@
 {
   "name": "Suncloud Monitor",
-  "render_readme": true,
-  "description": "Home Assistant integration for Sungrow Suncloud API using secure RSA/AES encryption.",
   "domain": "suncloud_monitor",
-  "country": [],
-  "homeassistant": "2023.9.0",
-  "iot_class": "cloud_polling",
-  "codeowners": ["@jsanchezdelvillar"],
   "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
-  "integration_type": "integration"
+  "codeowners": ["@jsanchezdelvillar"],
+  "requirements": [],
+  "iot_class": "cloud_polling",
+  "description": "Home Assistant integration for Sungrow Suncloud API using secure RSA/AES encryption.",
+  "render_readme": true,
+  "homeassistant": "2023.9.0"
 }
