@@ -8,5 +8,5 @@
   "iot_class": "cloud_polling",
   "codeowners": ["@jsanchezdelvillar"],
   "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
-  "integration_type": "integration",
+  "integration_type": "integration"
 }
