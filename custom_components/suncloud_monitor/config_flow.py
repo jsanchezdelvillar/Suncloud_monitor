@@ -1,3 +1,5 @@
+"""Config flow for Suncloud Monitor."""
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -19,9 +21,12 @@ DEFAULT_BASE_URL = "https://gateway.isolarcloud.eu"
 DEFAULT_POLL_INTERVAL = 5
 
 class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for Suncloud Monitor."""
+
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
+        """Handle the initial user step."""
         errors = {}
 
         if user_input is not None:
@@ -43,24 +48,32 @@ class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
+        """Get the options flow handler."""
         return SuncloudOptionsFlowHandler(config_entry)
 
-
 class SuncloudOptionsFlowHandler(config_entries.OptionsFlow):
+    """Options flow for Suncloud Monitor."""
+
     def __init__(self, config_entry):
+        """Initialize SuncloudOptionsFlowHandler."""
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
+        """Handle the initial step of the options flow."""
         return await self.async_step_user(user_input)
 
     async def async_step_user(self, user_input=None):
+        """Handle the user step in the options flow."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
         options = self.config_entry.options
 
         schema = vol.Schema({
-            vol.Optional(CONF_POLL_INTERVAL, default=options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)): int
+            vol.Optional(
+                CONF_POLL_INTERVAL,
+                default=options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+            ): int
         })
 
         return self.async_show_form(step_id="user", data_schema=schema)
