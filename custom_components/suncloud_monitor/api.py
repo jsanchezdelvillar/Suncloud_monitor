@@ -75,3 +75,30 @@ class SuncloudSensor(CoordinatorEntity, Entity):
     @property
     def native_value(self):
         return self.coordinator.data.get(f"p{self._point_id}", "Unknown")
+
+async def get_open_points(config, device_type=11, device_model_id=None):
+    """Retrieve list of open telemetry points for a device type."""
+    payload = {
+        "device_type": str(device_type),
+        "type": 2,  # 2 = remote telemetry points
+        "curPage": 1,
+        "size": 999
+    }
+
+    if device_model_id:
+        payload["device_model_id"] = str(device_model_id)
+
+    result = await post_request(None, config, "/openapi/getOpenPointInfo", payload)
+    if not result or result.get("result_code") != "1":
+        _LOGGER.error("Failed to fetch open point info")
+        return []
+
+    points = result.get("result_data", {}).get("pageList", [])
+    return [
+        {
+            "id": str(p.get("point_id")),
+            "name": p.get("point_name"),
+            "unit": p.get("show_unit")
+        }
+        for p in points
+    ]
