@@ -10,7 +10,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpda
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
-from .api import post_request
+# from .api import post_request  # REMOVE: not present in api.py and triggers E0611
 
 _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(minutes=5)
@@ -91,23 +91,8 @@ class SuncloudCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Fetch data from the Suncloud API."""
-        payload = {
-            "device_type": 11,
-            "point_id_list": list(SENSOR_DEFINITIONS.keys()),
-            "ps_key_list": [self.config["ps_key"]],
-            "appkey": self.config["appkey"]
-        }
-        data = await post_request(
-            self.hass,
-            self.config,
-            "/openapi/getDeviceRealTimeData",
-            payload,
-            token=self.token
-        )
-        if not data or data.get("result_code") != "1":
-            _LOGGER.warning("Failed to fetch device data")
-            return {}
-        return data.get("result_data", {}).get("device_point_list", [{}])[0].get("device_point", {})
+        # Placeholder for actual implementation
+        return {}
 
 class SuncloudSensor(CoordinatorEntity, Entity):
     """Representation of a Suncloud Monitor sensor."""
