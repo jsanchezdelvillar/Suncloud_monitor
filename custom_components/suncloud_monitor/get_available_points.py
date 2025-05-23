@@ -1,3 +1,5 @@
+"""Module to fetch available telemetry points from the Suncloud API and update Home Assistant state."""
+
 import json
 import logging
 import requests
@@ -28,11 +30,13 @@ def classify_point(unit: str, name: str):
 def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_select.telemetry_points"):
     """
     Queries open telemetry points and stores metadata for each point.
+
     Args:
         token (str): API Authorization token.
         api_url (str): Base API URL.
         hass (HomeAssistant, optional): Home Assistant instance for state/service integration.
         telemetry_entity_id (str): Home Assistant entity ID to update.
+
     Returns:
         dict: point_meta, or None if failed.
     """
@@ -52,45 +56,48 @@ def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_s
         "size": 999
     }
 
+    point_meta = {}
     try:
-        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
         response.raise_for_status()
         result = response.json()
-        if result.get("result_code") == "1":
-            points = result.get("result_data", {}).get("pageList", [])
-            _LOGGER.info("[POINT INFO] Found %d telemetry points.", len(points))
-
-            point_meta = {}
-            for pt in points:
-                pid = str(pt.get("point_id"))
-                unit = pt.get("show_unit", "")
-                name = pt.get("point_name", "")
-                device_class, icon = classify_point(unit, name)
-                point_meta[pid] = {
-                    "unit": unit,
-                    "name": name,
-                    "device_class": device_class,
-                    "icon": icon
-                }
-
-            # If Home Assistant instance is provided, update states/services
-            if hass is not None:
-                hass.states.async_set("sensor.point_meta_json", json.dumps(point_meta))
-                point_ids = list(point_meta.keys())
-                hass.async_create_task(
-                    hass.services.async_call(
-                        "input_select", "set_options",
-                        {
-                            "entity_id": telemetry_entity_id,
-                            "options": point_ids
-                        }
-                    )
-                )
-            return point_meta
-        else:
-            _LOGGER.error("[POINT INFO] API error: %s", result.get('result_msg'))
-    except requests.RequestException as e:
+    except requests.exceptions.RequestException as e:
         _LOGGER.error("[POINT INFO] HTTP request failed: %s", e)
-    except Exception as e:
-        _LOGGER.exception("[POINT INFO] Unexpected exception: %s", e)
-    return None
+        return None
+    except ValueError as e:
+        _LOGGER.error("[POINT INFO] Failed to decode JSON: %s", e)
+        return None
+
+    if result.get("result_code") != "1":
+        _LOGGER.error("[POINT INFO] API error: %s", result.get('result_msg'))
+        return None
+
+    points = result.get("result_data", {}).get("pageList", [])
+    _LOGGER.info("[POINT INFO] Found %d telemetry points.", len(points))
+
+    for pt in points:
+        pid = str(pt.get("point_id"))
+        unit = pt.get("show_unit", "")
+        name = pt.get("point_name", "")
+        device_class, icon = classify_point(unit, name)
+        point_meta[pid] = {
+            "unit": unit,
+            "name": name,
+            "device_class": device_class,
+            "icon": icon
+        }
+
+    # If Home Assistant instance is provided, update states/services
+    if hass is not None and point_meta:
+        hass.states.async_set("sensor.point_meta_json", json.dumps(point_meta))
+        point_ids = list(point_meta.keys())
+        hass.async_create_task(
+            hass.services.async_call(
+                "input_select", "set_options",
+                {
+                    "entity_id": telemetry_entity_id,
+                    "options": point_ids
+                }
+            )
+        )
+    return point_meta
