@@ -16,14 +16,48 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(minutes=5)
 
 SENSOR_DEFINITIONS = {
-    "83022": {"name": "Daily Yield", "unit": "Wh", "device_class": "energy", "icon": "mdi:transmission-tower", "state_class": "total_increasing"},
-    "83033": {"name": "Current Power", "unit": "W", "device_class": "power", "icon": "mdi:flash", "state_class": "measurement"},
-    "83025": {"name": "Equivalent Hours", "unit": "h", "icon": "mdi:clock", "state_class": "measurement"},
-    "83102": {"name": "Energy Purchased", "unit": "Wh", "device_class": "energy", "icon": "mdi:transmission-tower", "state_class": "total_increasing"},
-    "83072": {"name": "Energy Fed In", "unit": "Wh", "device_class": "energy", "icon": "mdi:transmission-tower-export", "state_class": "total_increasing"},
-    "83106": {"name": "Load Power", "unit": "W", "device_class": "power", "icon": "mdi:lightning-bolt", "state_class": "measurement"}
+    "83022": {
+        "name": "Daily Yield",
+        "unit": "Wh",
+        "device_class": "energy",
+        "icon": "mdi:transmission-tower",
+        "state_class": "total_increasing",
+    },
+    "83033": {
+        "name": "Current Power",
+        "unit": "W",
+        "device_class": "power",
+        "icon": "mdi:flash",
+        "state_class": "measurement",
+    },
+    "83025": {
+        "name": "Equivalent Hours",
+        "unit": "h",
+        "icon": "mdi:clock",
+        "state_class": "measurement",
+    },
+    "83102": {
+        "name": "Energy Purchased",
+        "unit": "Wh",
+        "device_class": "energy",
+        "icon": "mdi:transmission-tower",
+        "state_class": "total_increasing",
+    },
+    "83072": {
+        "name": "Energy Fed In",
+        "unit": "Wh",
+        "device_class": "energy",
+        "icon": "mdi:transmission-tower-export",
+        "state_class": "total_increasing",
+    },
+    "83106": {
+        "name": "Load Power",
+        "unit": "W",
+        "device_class": "power",
+        "icon": "mdi:lightning-bolt",
+        "state_class": "measurement",
+    },
 }
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -39,7 +73,6 @@ async def async_setup_entry(
     for point_id, details in SENSOR_DEFINITIONS.items():
         sensors.append(SuncloudSensor(coordinator, point_id, details))
     async_add_entities(sensors)
-
 
 class SuncloudCoordinator(DataUpdateCoordinator):
     """Coordinator for updating Suncloud Monitor sensor data."""
@@ -75,7 +108,6 @@ class SuncloudCoordinator(DataUpdateCoordinator):
             _LOGGER.warning("Failed to fetch device data")
             return {}
         return data.get("result_data", {}).get("device_point_list", [{}])[0].get("device_point", {})
-
 
 class SuncloudSensor(CoordinatorEntity, Entity):
     """Representation of a Suncloud Monitor sensor."""
