@@ -1,10 +1,13 @@
+"""Sensor platform for Suncloud Monitor integration."""
+
+from datetime import timedelta
+import logging
+
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 from homeassistant.helpers.entity import Entity
-from datetime import timedelta
-import logging
 
 from .const import DOMAIN
 from .api import post_request
@@ -22,7 +25,12 @@ SENSOR_DEFINITIONS = {
 }
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback
+):
+    """Set up Suncloud Monitor sensors from a config entry."""
     config = hass.data[DOMAIN]["config"]
     coordinator = SuncloudCoordinator(hass, config)
     await coordinator.async_config_entry_first_refresh()
@@ -34,7 +42,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
 
 
 class SuncloudCoordinator(DataUpdateCoordinator):
+    """Coordinator for updating Suncloud Monitor sensor data."""
+
     def __init__(self, hass: HomeAssistant, config: dict):
+        """Initialize the coordinator."""
         self.hass = hass
         self.config = config
         self.token = config.get("token")
@@ -46,13 +57,20 @@ class SuncloudCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self):
+        """Fetch data from the Suncloud API."""
         payload = {
             "device_type": 11,
             "point_id_list": list(SENSOR_DEFINITIONS.keys()),
             "ps_key_list": [self.config["ps_key"]],
             "appkey": self.config["appkey"]
         }
-        data = await post_request(self.hass, self.config, "/openapi/getDeviceRealTimeData", payload, token=self.token)
+        data = await post_request(
+            self.hass,
+            self.config,
+            "/openapi/getDeviceRealTimeData",
+            payload,
+            token=self.token
+        )
         if not data or data.get("result_code") != "1":
             _LOGGER.warning("Failed to fetch device data")
             return {}
@@ -60,7 +78,10 @@ class SuncloudCoordinator(DataUpdateCoordinator):
 
 
 class SuncloudSensor(CoordinatorEntity, Entity):
+    """Representation of a Suncloud Monitor sensor."""
+
     def __init__(self, coordinator: SuncloudCoordinator, point_id: str, details: dict):
+        """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"suncloud_{point_id}"
         self._attr_name = f"Suncloud {details['name']}"
@@ -72,5 +93,5 @@ class SuncloudSensor(CoordinatorEntity, Entity):
 
     @property
     def native_value(self):
+        """Return the current value reported by the sensor."""
         return self.coordinator.data.get(f"p{self._point_id}", "Unknown")
-
