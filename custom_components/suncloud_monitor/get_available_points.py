@@ -1,4 +1,4 @@
-"""Module to fetch available telemetry points from the Suncloud API and update Home Assistant state."""
+"""Fetch available telemetry points from the Suncloud API and update Home Assistant state."""
 
 import json
 import logging
@@ -27,15 +27,16 @@ def classify_point(unit: str, name: str):
         return None, "mdi:currency-cny"
     return None, "mdi:gauge"
 
-def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_select.telemetry_points"):
+def get_available_points(token, api_url, hass=None,
+                         telemetry_entity_id="input_select.telemetry_points"):
     """
-    Queries open telemetry points and stores metadata for each point.
+    Query open telemetry points and store metadata for each point.
 
     Args:
         token (str): API Authorization token.
         api_url (str): Base API URL.
-        hass (HomeAssistant, optional): Home Assistant instance for state/service integration.
-        telemetry_entity_id (str): Home Assistant entity ID to update.
+        hass (HomeAssistant, optional): Home Assistant instance for integration.
+        telemetry_entity_id (str): HA entity ID to update.
 
     Returns:
         dict: point_meta, or None if failed.
@@ -45,25 +46,23 @@ def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_s
         return None
 
     url = f"{api_url}/openapi/getOpenPointInfo"
-    headers = {
-        "Authorization": token,
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "device_type": 11,
-        "type": 2,
-        "curPage": 1,
-        "size": 999
-    }
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+    payload = {"device_type": 11, "type": 2, "curPage": 1, "size": 999}
 
-    point_meta = {}
     try:
-        response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=10)
+        response = requests.post(
+            url, headers=headers, data=json.dumps(payload), timeout=10
+        )
         response.raise_for_status()
-        result = response.json()
+    except requests.exceptions.Timeout as e:
+        _LOGGER.error("[POINT INFO] HTTP request timed out: %s", e)
+        return None
     except requests.exceptions.RequestException as e:
         _LOGGER.error("[POINT INFO] HTTP request failed: %s", e)
         return None
+
+    try:
+        result = response.json()
     except ValueError as e:
         _LOGGER.error("[POINT INFO] Failed to decode JSON: %s", e)
         return None
@@ -75,6 +74,7 @@ def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_s
     points = result.get("result_data", {}).get("pageList", [])
     _LOGGER.info("[POINT INFO] Found %d telemetry points.", len(points))
 
+    point_meta = {}
     for pt in points:
         pid = str(pt.get("point_id"))
         unit = pt.get("show_unit", "")
@@ -87,17 +87,14 @@ def get_available_points(token, api_url, hass=None, telemetry_entity_id="input_s
             "icon": icon
         }
 
-    # If Home Assistant instance is provided, update states/services
+    # Update states/services if hass is provided
     if hass is not None and point_meta:
         hass.states.async_set("sensor.point_meta_json", json.dumps(point_meta))
         point_ids = list(point_meta.keys())
         hass.async_create_task(
             hass.services.async_call(
                 "input_select", "set_options",
-                {
-                    "entity_id": telemetry_entity_id,
-                    "options": point_ids
-                }
+                {"entity_id": telemetry_entity_id, "options": point_ids}
             )
         )
     return point_meta
