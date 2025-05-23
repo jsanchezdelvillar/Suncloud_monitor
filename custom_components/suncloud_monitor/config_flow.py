@@ -3,7 +3,7 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers import selector
+# selector is unused, so removed
 
 from .const import (
     DOMAIN,
