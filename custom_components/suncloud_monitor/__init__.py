@@ -3,4 +3,3 @@
 def setup(hass, config):
     """Set up the Suncloud Monitor integration."""
     # pylint: disable=unused-argument
-    pass
