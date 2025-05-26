@@ -1,7 +1,8 @@
-- alias: "Suncloud Monitor – Update Data"
-  id: suncloud_monitor_update
+- id: refresh_telemetry_points
+  alias: Refresh Suncloud Telemetry Points
   trigger:
     - platform: time_pattern
-      minutes: "/5"
+      minutes: "/30"
   action:
-    - service: pyscript.update_device_data_RSA
+    - service: pyscript.get_suncloud_points
+  mode: single
