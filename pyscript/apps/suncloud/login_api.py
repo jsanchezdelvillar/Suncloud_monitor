@@ -11,21 +11,21 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.primitives.asymmetric import padding
 
+
 @service
-def login_api():
+def suncloud_login_api():
     """
     Logs into Sungrow API and stores token in input_text.token
     """
 
-    username = pyscript.app_config["suncloud_username"]
-    password = pyscript.app_config["suncloud_password"]
-    appkey = pyscript.app_config["suncloud_appkey"]
-    x_access_key = pyscript.app_config["suncloud_secret"]
-    public_key_base64 = pyscript.app_config["suncloud_rsa_key"]
+    username = app_config["suncloud_username"]
+    password = app_config["suncloud_password"]
+    appkey = app_config["suncloud_appkey"]
+    x_access_key = app_config["suncloud_secret"]
+    public_key_base64 = app_config["suncloud_rsa_key"]
     login_url = "https://gateway.isolarcloud.eu/openapi/login"
 
-    # Generate AES secret key and encrypt it with RSA public key
-    unenc_key = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    unenc_key = generate_random_key()
     x_random_secret_key = rsa_encrypt_secret_key(unenc_key, public_key_base64)
 
     nonce = generate_nonce()
@@ -59,12 +59,10 @@ def login_api():
             decrypted = aes_decrypt(response.text, unenc_key)
             token = decrypted.get("result_data", {}).get("token", "")
             state.set("input_text.token", token)
-            log.info(f"[LOGIN] Success. Token set: {token[:6]}...")
-
+            log.info(f"[LOGIN] Token received: {token[:6]}...")
         else:
             log.error(f"[LOGIN] HTTP {response.status_code}: {response.text}")
             state.set("input_text.token", "Error")
-
     except Exception as e:
         log.error(f"[LOGIN] Exception: {e}")
         state.set("input_text.token", "Error")
@@ -107,7 +105,11 @@ def aes_decrypt(encrypted_hex: str, password: str):
     except Exception as e:
         log.error(f"[AES] Decrypt error: {e}")
         return {}
-        
+
 
 def generate_nonce(length=32):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def generate_random_key(length=16):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
