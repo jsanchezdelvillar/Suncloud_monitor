@@ -1,7 +1,7 @@
 {
   "domain": "suncloud_monitor",
   "name": "Suncloud Monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
   "issue_tracker": "https://github.com/jsanchezdelvillar/Suncloud_monitor/issues",
   "dependencies": [],
