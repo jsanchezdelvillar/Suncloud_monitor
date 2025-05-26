@@ -1,15 +1,17 @@
 {
   "domain": "suncloud_monitor",
   "name": "Suncloud Monitor",
-  "version": "1.0.1",
   "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
   "issue_tracker": "https://github.com/jsanchezdelvillar/Suncloud_monitor/issues",
-  "dependencies": [],
-  "codeowners": ["@jsanchezdelvillar"],
-  "requirements": [
-    "cryptography>=42.0.0"
-  ],
+  "version": "1.0.0",
   "config_flow": true,
-  "iot_class": "cloud_polling",
-  "loggers": ["suncloud_monitor"]
+  "requirements": [
+    "cryptography>=41.0.0"
+  ],
+  "dependencies": [],
+  "codeowners": [
+    "@jsanchezdelvillar"
+  ],
+  "iot_class": "cloud_poll",
+  "integration_type": "service"
 }
