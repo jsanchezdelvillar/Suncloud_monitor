@@ -2,27 +2,26 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Suncloud Monitor",
-        "description": "Enter your credentials and connection details.",
+        "title": "Suncloud Monitor Setup",
+        "description": "Configure access to your Sungrow iSolarCloud account",
         "data": {
-          "username": "User Account",
-          "password": "Password",
-          "appkey": "App Key",
-          "sung_secret": "Access Secret",
-          "RSA_public": "RSA Public Key (Base64 DER)",
-          "ps_key": "Plant Key (ps_key)",
-          "base_url": "API Base URL",
-          "poll_interval": "Polling Interval (min)"
+          "suncloud_username": "Sungrow Username",
+          "suncloud_password": "Sungrow Password",
+          "suncloud_appkey": "App Key",
+          "suncloud_secret": "Access Key (x-access-key)",
+          "suncloud_rsa_key": "RSA Public Key (Base64, X.509 DER format)",
+          "ps_key": "Optional: Plant ps_key",
+          "base_url": "Base URL (leave default unless custom)"
         }
       }
     },
     "error": {
-      "invalid_auth": "Invalid username or password",
-      "cannot_connect": "Failed to connect to server",
-      "unknown": "Unknown error"
+      "cannot_connect": "Cannot connect to Sungrow API",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
     },
     "abort": {
-      "single_instance_allowed": "Only one instance allowed."
+      "already_configured": "Account is already configured."
     }
   }
 }
