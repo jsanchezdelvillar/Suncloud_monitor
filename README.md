@@ -113,9 +113,9 @@ You can add a manual control card to your dashboard for telemetry selection and 
 
 ### Steps (UI Mode):
 
-1. Go to **Overview → Edit Dashboard**
-2. Click **+ Add Card → Manual**
-3. Paste this:
+Go to **Overview → Edit Dashboard**
+Click **+ Add Card → Manual**
+Paste this:
 
     type: vertical-stack  
     cards:
