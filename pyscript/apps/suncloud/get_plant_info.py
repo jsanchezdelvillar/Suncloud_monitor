@@ -2,20 +2,20 @@ import json
 import requests
 
 @service
-def get_plant_info():
+def suncloud_get_plant_info():
     """
-    Uses meter SN to fetch plant details and store ps_key in input_text.ps_key
+    Uses meter SN to fetch ps_key and store in input_text.ps_key
     """
 
     token = state.get("input_text.token")
     meter_sn = state.get("sensor.meter_sn")
 
     if not token or token == "Error":
-        log.error("[PLANT INFO] No valid token. Run login_api first.")
+        log.error("[PLANT INFO] Token is invalid. Run suncloud_login_api first.")
         return
 
     if not meter_sn or meter_sn == "none":
-        log.error("[PLANT INFO] No meter SN found. Run get_device_list first.")
+        log.error("[PLANT INFO] No meter SN. Run suncloud_get_device_list first.")
         return
 
     url = "https://gateway.isolarcloud.eu/openapi/getPowerStationDetail"
@@ -39,13 +39,13 @@ def get_plant_info():
             if result.get("result_code") == "1":
                 data = result.get("result_data", {})
                 ps_key = data.get("ps_key", "")
-                ps_name = data.get("ps_name", "unknown")
+                ps_name = data.get("ps_name", "Unknown")
 
                 if ps_key:
                     state.set("input_text.ps_key", ps_key)
                     log.info(f"[PLANT INFO] Retrieved ps_key for '{ps_name}': {ps_key}")
                 else:
-                    log.warning("[PLANT INFO] ps_key not found in response.")
+                    log.warning("[PLANT INFO] No ps_key returned from API.")
 
             else:
                 log.error(f"[PLANT INFO] API Error: {result.get('result_msg')}")
