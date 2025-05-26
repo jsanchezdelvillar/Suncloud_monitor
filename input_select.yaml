@@ -1,11 +1,6 @@
 telemetry_points:
-  name: Telemetry Points
+  name: Suncloud Telemetry Points
   options:
-    - 83022
-    - 83033
-    - 83025
-    - 83102
-    - 83072
-    - 83106
-  initial: 83022
+    - "83022"  # Default example: Daily Yield
+    - "83033"  # Current Power
   icon: mdi:chart-line
