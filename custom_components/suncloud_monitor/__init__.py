@@ -1,17 +1,17 @@
+"""Suncloud Monitor Integration - __init__.py"""
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up integration from configuration.yaml (not used)."""
+    """Legacy YAML setup - unused."""
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Set up Suncloud Monitor from config entry."""
+    """Set up Suncloud Monitor from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["config"] = entry.data
-
-    # NEW: Recommended in HA 2025+
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
 
