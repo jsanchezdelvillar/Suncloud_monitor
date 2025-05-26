@@ -1,137 +1,116 @@
+import aiohttp
 import json
-import requests
-from homeassistant.helpers.event import async_track_time_interval
-from datetime import timedelta
+import logging
+import base64
+import random
+import string
+import time
 
-from .const import DOMAIN
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.padding import PKCS7
+from cryptography.hazmat.primitives.asymmetric import padding
 
-async def async_setup_api(hass, config):
-    """Set up the SunCloud Monitor API polling."""
+_LOGGER = logging.getLogger(__name__)
 
-    token = None
-    ps_key = None
 
-    async def login_api():
-        nonlocal token
-        username = config.get("username")
-        password = config.get("password")
-        base_url = config.get("base_url")
+def get_secret_key(key: str):
+    return key.encode("utf-8").ljust(16)[:16]
 
-        url = f"{base_url}/openapi/login"
-        headers = {"Content-Type": "application/json"}
-        payload = {
-            "user_account": username,
-            "user_password": password
-        }
 
-        try:
-            response = await hass.async_add_executor_job(lambda: requests.post(url, headers=headers, json=payload))
-            result = response.json()
-            token = result.get("result_data", {}).get("token")
-            hass.states.async_set("sensor.api_login_token", token or "none")
-        except Exception as e:
-            hass.states.async_set("sensor.api_login_token", "none")
-            raise e
+def encrypt(content: str, password: str):
+    try:
+        password_bytes = get_secret_key(password)
+        cipher = Cipher(algorithms.AES(password_bytes), modes.ECB(), backend=default_backend())
+        encryptor = cipher.encryptor()
+        padder = PKCS7(128).padder()
+        padded_data = padder.update(content.encode("utf-8")) + padder.finalize()
+        encrypted_data = encryptor.update(padded_data) + encryptor.finalize()
+        return encrypted_data.hex().upper()
+    except Exception as e:
+        _LOGGER.error(f"Encryption error: {e}")
+        return None
 
-    async def get_plant_list():
-        nonlocal token
-        base_url = config.get("base_url")
-        url = f"{base_url}/openapi/getPowerStationList"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        payload = {"curPage": 1, "size": 10}
 
-        response = await hass.async_add_executor_job(lambda: requests.post(url, headers=headers, json=payload))
-        result = response.json()
-        ps_list = result.get("result_data", {}).get("pageList", [])
-        if ps_list:
-            hass.states.async_set("sensor.plant_id", ps_list[0].get("ps_id"))
+def decrypt(content: str, password: str):
+    try:
+        decrypt_from = bytes.fromhex(content)
+        password_bytes = get_secret_key(password)
+        cipher = Cipher(algorithms.AES(password_bytes), modes.ECB(), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_padded_data = decryptor.update(decrypt_from) + decryptor.finalize()
+        unpadder = PKCS7(128).unpadder()
+        original = unpadder.update(decrypted_padded_data) + unpadder.finalize()
+        return json.loads(original.decode("utf-8"))
+    except Exception as e:
+        _LOGGER.error(f"Decryption error: {e}")
+        return None
 
-    async def get_device_list():
-        nonlocal token
-        base_url = config.get("base_url")
-        ps_id = hass.states.get("sensor.plant_id").state
-        url = f"{base_url}/openapi/getDeviceList"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        payload = {"curPage": 1, "size": 10, "ps_id": int(ps_id)}
 
-        response = await hass.async_add_executor_job(lambda: requests.post(url, headers=headers, json=payload))
-        result = response.json()
-        devices = result.get("result_data", {}).get("pageList", [])
-        for dev in devices:
-            if dev.get("device_type") == 7:
-                meter_sn = dev.get("device_sn")
-                hass.states.async_set("sensor.meter_sn", meter_sn)
-                break
+def public_encrypt(data: str, public_key_base64: str):
+    try:
+        public_key_bytes = base64.urlsafe_b64decode(public_key_base64.strip())
+        public_key = serialization.load_der_public_key(public_key_bytes, backend=default_backend())
+        encrypted = public_key.encrypt(
+            data.encode("utf-8"),
+            padding.PKCS1v15()
+        )
+        return base64.urlsafe_b64encode(encrypted).decode("utf-8")
+    except Exception as e:
+        _LOGGER.error(f"RSA public key encryption error: {e}")
+        return None
 
-    async def get_plant_info():
-        nonlocal token, ps_key
-        base_url = config.get("base_url")
-        meter_sn = hass.states.get("sensor.meter_sn").state
-        url = f"{base_url}/openapi/getPowerStationDetail"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        payload = {"sn": meter_sn, "is_get_ps_remarks": "1"}
 
-        response = await hass.async_add_executor_job(lambda: requests.post(url, headers=headers, json=payload))
-        result = response.json()
-        data = result.get("result_data", {})
-        ps_key = data.get("ps_key")
-        hass.states.async_set("sensor.ps_key", ps_key)
+def generate_nonce(length=32):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-    async def get_plant_values():
-        nonlocal token, ps_key
-        base_url = config.get("base_url")
-        url = f"{base_url}/openapi/getDeviceRealTimeData"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        ps_key = hass.states.get("sensor.ps_key").state
 
-        point_ids = hass.states.get("input_select.telemetry_points").attributes.get("options")
-        payload = {
-            "point_id_list": point_ids,
-            "ps_key_list": [ps_key],
-            "device_type": 11
-        }
+def generate_random_secret_key(length=16):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-        response = await hass.async_add_executor_job(lambda: requests.post(url, headers=headers, json=payload))
-        result = response.json()
-        data = result.get("result_data", [])
-        for point in data:
-            pid = point.get("point_id")
-            val = point.get("value")
-            unit = point.get("unit")
-            hass.states.async_set(f"sensor.plant_point_{pid}", val)
 
-    async def get_plant_values_resilient(_now=None):
-        """Scheduled job that retries missing data."""
-        try:
-            token_state = hass.states.get("sensor.api_login_token")
-            ps_key_state = hass.states.get("sensor.ps_key")
+async def post_request(endpoint: str, payload: dict, config: dict, token: str = None):
+    base_url = config.get("base_url", "https://gateway.isolarcloud.eu")
+    public_key_base64 = config.get("suncloud_rsa_key")
+    appkey = config.get("suncloud_appkey")
+    x_access_key = config.get("suncloud_secret")
 
-            if not token_state or token_state.state == "none":
-                await login_api()
-            if not ps_key_state or ps_key_state.state == "none":
-                await get_plant_list()
-                await get_device_list()
-                await get_plant_info()
+    unenc_key = generate_random_secret_key()
+    x_random_secret_key = public_encrypt(unenc_key, public_key_base64)
+    nonce = generate_nonce()
+    timestamp = str(int(time.time() * 1000))
 
-            await get_plant_values()
+    wrapped_payload = {
+        "api_key_param": {
+            "nonce": nonce,
+            "timestamp": timestamp
+        },
+        "appkey": appkey,
+        **payload
+    }
 
-        except Exception as e:
-            hass.states.async_set("sensor.plant_polling_error", str(e))
+    headers = {
+        "User-Agent": "Home Assistant",
+        "x-access-key": x_access_key,
+        "x-random-secret-key": x_random_secret_key,
+        "Content-Type": "application/json",
+        "sys_code": "901"
+    }
 
-    # Run poller every X minutes
-    poll_minutes = config.get("poll_interval", 5)
-    async_track_time_interval(hass, get_plant_values_resilient, timedelta(minutes=poll_minutes))
+    if token:
+        headers["token"] = token
 
-    return True
+    encrypted_body = encrypt(json.dumps(wrapped_payload), unenc_key)
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{base_url}{endpoint}", headers=headers, data=encrypted_body) as resp:
+                text = await resp.text()
+                if resp.status != 200:
+                    _LOGGER.error(f"API {endpoint} failed: {resp.status} {text}")
+                    return None
+                return decrypt(text, unenc_key)
+    except Exception as e:
+        _LOGGER.error(f"post_request exception: {e}")
+        return None
