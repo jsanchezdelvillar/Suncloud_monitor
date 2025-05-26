@@ -1,31 +1,51 @@
-"""Pyscript service to fetch Suncloud telemetry points and update input_select."""
-
 import json
-from custom_components.suncloud_monitor.api import get_open_points
+import requests
 
-# The decorator and objects below are provided by the Pyscript runtime.
-# pylint: disable=undefined-variable
+@service
+def get_suncloud_points():
+    """
+    Fetch available telemetry points for device_type 11 and push to input_select.telemetry_points.
+    """
 
-@service  # type: ignore[name-defined]
-async def get_suncloud_points():
-    """Fetch available telemetry points and update input_select."""
-    config = {
-        "RSA_public": secrets["suncloud_rsa_key"],  # type: ignore[name-defined]
-        "sung_secret": secrets["suncloud_secret"],  # type: ignore[name-defined]
-        "base_url": "https://gateway.isolarcloud.eu",
-        "appkey": secrets["suncloud_appkey"]        # type: ignore[name-defined]
-    }
+    token = state.get("input_text.token")
+    model_id = "367701"  # default model ID
+    base_url = "https://gateway.isolarcloud.eu"
+    endpoint = "/openapi/getOpenPointInfo"
 
-    points = await get_open_points(config, device_type=11)
-    if not points:
-        log.error("No points returned from Sungrow API.")  # type: ignore[name-defined]
+    if not token or token == "Error":
+        log.error("[POINTS] Token not available. Run login first.")
         return
 
-    # Print list to log
-    for pt in points:
-        log.info(f"[{pt['id']}] {pt['name']} ({pt['unit']})")  # type: ignore[name-defined]
+    headers = {
+        "Content-Type": "application/json",
+        "token": token
+    }
 
-    # Extract just the IDs to set in input_select
-    point_ids = [pt["id"] for pt in points]
-    input_select.set_options("telemetry_points", point_ids)  # type: ignore[name-defined]
-    log.info(f"Updated input_select.telemetry_points with {len(point_ids)} points.")  # type: ignore[name-defined]
+    payload = {
+        "device_type": 11,
+        "type": 2,
+        "curPage": 1,
+        "size": 999,
+        "device_model_id": model_id
+    }
+
+    try:
+        response = task.executor(requests.post, f"{base_url}{endpoint}", headers=headers, data=json.dumps(payload))
+
+        if response.status_code == 200:
+            result = response.json()
+            points = result.get("result_data", {}).get("pageList", [])
+
+            valid_ids = [str(p.get("point_id")) for p in points if "point_id" in p]
+
+            if valid_ids:
+                state.set("input_select.telemetry_points", {"options": valid_ids})
+                log.info(f"[POINTS] Set {len(valid_ids)} telemetry points to input_select.telemetry_points")
+            else:
+                log.warning("[POINTS] No valid telemetry point_ids found")
+
+        else:
+            log.error(f"[POINTS] HTTP Error {response.status_code}: {response.text}")
+
+    except Exception as e:
+        log.error(f"[POINTS] Exception: {e}")
