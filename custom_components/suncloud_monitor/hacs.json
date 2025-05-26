@@ -1,11 +1,10 @@
 {
   "name": "Suncloud Monitor",
-  "domain": "suncloud_monitor",
-  "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
-  "codeowners": ["@jsanchezdelvillar"],
-  "requirements": [
-    "cryptography>=42.0.0"
-  ],
-  "iot_class": "cloud_polling",
-  "version": "1.0.1"
+  "content_in_root": false,
+  "domains": ["sensor"],
+  "country": "🌍",
+  "render_readme": true,
+  "filename": "suncloud_monitor",
+  "zip_release": false,
+  "config_flow": true
 }
