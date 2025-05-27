@@ -4,34 +4,144 @@ import random
 import string
 import time
 import aiohttp
+import builtins
+import yaml
+from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
 
+CONFIG_PATH = "/config/custom_components/suncloud_monitor/config_storage.yaml"
+
+# ============================================
+# 🧠 CONFIG LOADER & SAVER FOR PERSISTENT DATA
+# ============================================
+
+def load_suncloud_config():
+    try:
+        with builtins.open(CONFIG_PATH, "r") as f:
+            return yaml.safe_load(f) or {}
+    except Exception as e:
+        log.error(f"[CONFIG] ❌ Failed to load config: {e}")
+        return {}
+
+def save_suncloud_config(ps_key=None, sn=None, new_points: dict = None):
+    config = load_suncloud_config()
+    if ps_key:
+        config["ps_key"] = ps_key
+    if sn:
+        config["sn"] = sn
+    if new_points:
+        config.setdefault("points", {}).update(new_points)
+    try:
+        with builtins.open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f)
+        log.info("[CONFIG] ✅ Config saved")
+    except Exception as e:
+        log.error(f"[CONFIG] ❌ Write failed: {e}")
+
+# ========================
+# 🔐 ENCRYPTION UTILITIES
+# ========================
+
+def rsa_encrypt_secret_key(secret: str, public_key_base64: str) -> str:
+    log.info(f"[RSA] Encripting {secret} with {public_key_base64}")
+    try:
+        pubkey_bytes = base64.urlsafe_b64decode(public_key_base64.strip())
+        public_key = serialization.load_der_public_key(pubkey_bytes, backend=default_backend())
+        encrypted = public_key.encrypt(secret.encode("utf-8"), rsa_padding.PKCS1v15())
+        return base64.urlsafe_b64encode(encrypted).decode("utf-8")
+    except Exception as e:
+        log.error(f"[RSA] ❌ Error: {e}")
+        return "ENC_ERR"
+
+def aes_encrypt(content: str, password: str) -> str:
+    log.info(f"[AES] Encripting {content} with {password}")
+    try:
+        key = password.encode("utf-8").ljust(16)[:16]
+        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+        padder = PKCS7(128).padder()
+        padded = padder.update(content.encode("utf-8")) + padder.finalize()
+        encryptor = cipher.encryptor()
+        encrypted = encryptor.update(padded) + encryptor.finalize()
+        return encrypted.hex().upper()
+    except Exception as e:
+        log.error(f"[AES] ❌ Encrypt error: {e}")
+        return ""
+
+def aes_decrypt(content: str, password: str):
+    log.info(f"[AES] Decrypting {content} with {password}")
+    try:
+        key = password.encode("utf-8").ljust(16)[:16]
+        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted = decryptor.update(bytes.fromhex(content)) + decryptor.finalize()
+        unpadder = PKCS7(128).unpadder()
+        unpadded = unpadder.update(decrypted) + unpadder.finalize()
+        return json.loads(unpadded.decode("utf-8"))
+    except Exception as e:
+        log.error(f"[AES] ❌ Decrypt error: {e}")
+        return {}
+
+# ====================
+# 🧠 Misc Utils
+# ====================
+
+def generate_nonce(length=32):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def generate_random_key(length=16):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def build_headers(secret_key_encrypted, access_key, token=None):
+    headers = {
+        "Content-Type": "application/json;charset=UTF-8",
+        "sys_code": "901",
+        "x-access-key": access_key,  # ✅ static API key
+        "x-random-secret-key": secret_key_encrypted,  # ✅ RSA-encrypted AES key
+    }
+    if token:
+        headers["token"] = token
+    log.info(f"[HEA] Headers: {headers}")
+    return headers
+
+def build_encrypted_payload(original_payload, appkey, token, unenc_key):
+    payload = {
+        "appkey": appkey,
+        "token": token,
+        "lang": "_en_US",
+        "api_key_param": {
+            "nonce": generate_nonce(),
+            "timestamp": str(int(time.time() * 1000))
+        }
+    }
+    payload.update(original_payload)
+    log.info(f"[PAY] Payload: {payload}")
+    return aes_encrypt(json.dumps(payload), unenc_key)
+
+# ====================
+# 🔐 LOGIN SERVICE
+# ====================
 
 @service
 async def suncloud_login_api():
-    username = pyscript.app_config["suncloud_username"]
-    password = pyscript.app_config["suncloud_password"]
-    appkey = pyscript.app_config["suncloud_appkey"]
-    x_access_key = pyscript.app_config["suncloud_secret"]
-    public_key_base64 = pyscript.app_config["suncloud_rsa_key"]
+    username = pyscript.app_config["username"]
+    password = pyscript.app_config["password"]
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    public_key = pyscript.app_config["rsa_key"]
 
-    login_url = "https://gateway.isolarcloud.eu/openapi/login"
-
+    url = "https://gateway.isolarcloud.eu/openapi/login"
     unenc_key = generate_random_key()
-    x_random_secret_key = rsa_encrypt_secret_key(unenc_key, public_key_base64)
-
-    nonce = generate_nonce()
-    timestamp = str(int(time.time() * 1000))
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, public_key)
 
     payload = {
         "api_key_param": {
-            "nonce": nonce,
-            "timestamp": timestamp
+            "nonce": generate_nonce(),
+            "timestamp": str(int(time.time() * 1000))
         },
         "appkey": appkey,
         "login_type": "1",
@@ -41,8 +151,8 @@ async def suncloud_login_api():
 
     headers = {
         "User-Agent": "Home Assistant",
-        "x-access-key": x_access_key,
-        "x-random-secret-key": x_random_secret_key,
+        "x-access-key": access_key,
+        "x-random-secret-key": encrypted_key,
         "Content-Type": "application/json",
         "sys_code": "901"
     }
@@ -51,188 +161,256 @@ async def suncloud_login_api():
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(login_url, headers=headers, data=encrypted_body) as response:
-                response_body = await response.text()
-                log.info(f"[LOGIN] Encrypted response: {response_body}")
-                decrypted = aes_decrypt(response_body, unenc_key)
-                log.info(f"[LOGIN] Decrypted: {decrypted}")
-                if decrypted.get("result_code") == "1":
-                    if decrypted.get("result_data", {}).get("login_state") == "1":
-                        token = decrypted["result_data"].get("token", "")
-                        state.set("input_text.token", token)
-                        log.info(f"[LOGIN] Token stored: {token[:6]}...")
-                    else:
-                        log.error("[LOGIN] Invalid login_state")
-                        state.set("input_text.token", "Error")
+            async with session.post(url, headers=headers, data=encrypted_body) as response:
+                raw = await response.text()
+                decrypted = aes_decrypt(raw, unenc_key)
+                if decrypted.get("result_code") == "1" and decrypted.get("result_data", {}).get("login_state") == "1":
+                    token = decrypted["result_data"].get("token")
+                    state.set("input_text.token", token)
+                    log.info(f"[LOGIN] ✅ Token stored: {token[:6]}...")
                 else:
-                    log.error("[LOGIN] Failed, result_code != 1")
-                    state.set("input_text.token", "Error")
+                    log.error("[LOGIN] ❌ Invalid login response")
     except Exception as e:
-        log.error(f"[LOGIN] Exception: {e}")
-        state.set("input_text.token", "Error")
+        log.error(f"[LOGIN] ❌ Exception: {e}")
 
+# ================================
+# 🌱 GET PLANT LIST
+# ================================
 
 @service
-async def suncloud_get_plant_list(curPage: int = 1, size: int = 10):
+async def suncloud_get_plant_list():
     token = state.get("input_text.token")
-    if not token or token == "Error":
-        log.error("[PLANT LIST] No valid token.")
+    if not token:
+        log.error("[PLANT LIST] ❌ Missing token")
         return
 
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
+
     url = "https://gateway.isolarcloud.eu/openapi/getPowerStationList"
-    headers = {"Content-Type": "application/json", "token": token}
-    payload = {"curPage": curPage, "size": size}
+    unenc_key = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
+    headers = build_headers(encrypted_key, access_key, token)
+    body = build_encrypted_payload({"curPage": 1, "size": 10}, appkey, token, unenc_key)
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload) as response:
-                data = await response.json()
-                plants = data.get("result_data", {}).get("pageList", [])
+            async with session.post(url, headers=headers, data=body) as response:
+                raw = await response.text()
+                decrypted = aes_decrypt(raw, unenc_key)
+                plants = decrypted.get("result_data", {}).get("pageList", [])
                 if plants:
                     ps_id = plants[0].get("ps_id")
-                    ps_name = plants[0].get("ps_name")
                     state.set("sensor.plant_id", ps_id)
-                    log.info(f"[PLANT LIST] {ps_name} (ID: {ps_id})")
+                    log.info(f"[PLANT LIST] 🌱 Stored ps_id: {ps_id}")
                 else:
-                    log.warning("[PLANT LIST] No plants found.")
+                    log.warning("[PLANT LIST] ⚠️ No plants found")
     except Exception as e:
-        log.error(f"[PLANT LIST] Exception: {e}")
+        log.error(f"[PLANT LIST] ❌ Exception: {e}")
 
+# ================================
+# 🔌 GET DEVICE LIST
+# ================================
 
 @service
 async def suncloud_get_device_list():
     token = state.get("input_text.token")
     ps_id = state.get("sensor.plant_id")
-    if not token or token == "Error":
-        log.error("[DEVICE LIST] Token invalid")
-        return
-    if not ps_id:
-        log.error("[DEVICE LIST] No ps_id set")
+    if not token or not ps_id:
+        log.error("[DEVICE LIST] ❌ Missing token or ps_id")
         return
 
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
+
     url = "https://gateway.isolarcloud.eu/openapi/getDeviceList"
-    headers = {"Content-Type": "application/json", "token": token}
-    payload = {"curPage": 1, "size": 50, "ps_id": ps_id}
+    unenc_key = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
+    headers = build_headers(encrypted_key, access_key, token)
+    body = build_encrypted_payload({"curPage": 1, "size": 50, "ps_id": ps_id}, appkey, token, unenc_key)
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload) as response:
-                data = await response.json()
-                devices = data.get("result_data", {}).get("pageList", [])
-                for dev in devices:
-                    if dev.get("device_type") == 7:
-                        dev_sn = dev.get("device_sn")
-                        state.set("sensor.meter_sn", dev_sn)
-                        log.info(f"[DEVICE LIST] Found meter SN: {dev_sn}")
-                        return
-                log.warning("[DEVICE LIST] No meter found.")
+            async with session.post(url, headers=headers, data=body) as response:
+                raw = await response.text()
+                decrypted = aes_decrypt(raw, unenc_key)
+                devices = decrypted.get("result_data", {}).get("pageList", [])
+                for device in devices:
+                    if device.get("device_type") == 22:
+                        sn = device.get("device_sn") or device.get("communication_dev_sn")
+                        if sn:
+                            save_suncloud_config(sn=sn)
+                            log.info(f"[DEVICE LIST] ✅ Stored SN: {sn}")
+                            return
+                log.warning("[DEVICE LIST] ⚠️ No type 22 module found")
     except Exception as e:
-        log.error(f"[DEVICE LIST] Exception: {e}")
+        log.error(f"[DEVICE LIST] ❌ Exception: {e}")
 
+# ================================
+# 🔍 GET PLANT INFO
+# ================================
 
 @service
 async def suncloud_get_plant_info():
     token = state.get("input_text.token")
-    sn = state.get("sensor.meter_sn")
-    if not token or token == "Error":
-        log.error("[PLANT INFO] No valid token.")
-        return
-    if not sn:
-        log.error("[PLANT INFO] No meter_sn set.")
+    sn = state.get("sensor.module_sn")  # <-- Set by get_device_list()
+    if not token or not sn:
+        log.error("[PLANT INFO] ❌ Missing token or SN")
         return
 
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
+
     url = "https://gateway.isolarcloud.eu/openapi/getPowerStationDetail"
-    headers = {"Content-Type": "application/json", "token": token}
-    payload = {"sn": sn, "is_get_ps_remarks": "1"}
+    unenc_key = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
+    headers = build_headers(encrypted_key, access_key, token)
+
+    payload = {
+        "sn": sn,
+        "is_get_ps_remarks": "1"
+    }
+
+    encrypted_body = build_encrypted_payload(payload, appkey, token, unenc_key)
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload) as response:
-                data = await response.json()
-                ps_key = data.get("result_data", {}).get("ps_key", "")
-                ps_name = data.get("result_data", {}).get("ps_name", "unknown")
+            async with session.post(url, headers=headers, data=encrypted_body) as response:
+                raw = await response.text()
+                decrypted = aes_decrypt(raw, unenc_key)
+                ps_key = decrypted.get("result_data", {}).get("ps_key", "")
                 if ps_key:
+                    save_suncloud_config(ps_key=ps_key)
                     state.set("input_text.ps_key", ps_key)
-                    log.info(f"[PLANT INFO] {ps_name} ps_key: {ps_key}")
+                    log.info(f"[PLANT INFO] 🔑 ps_key: {ps_key}")
                 else:
-                    log.warning("[PLANT INFO] ps_key not returned")
+                    log.warning("[PLANT INFO] ⚠️ No ps_key in response")
     except Exception as e:
-        log.error(f"[PLANT INFO] Exception: {e}")
+        log.error(f"[PLANT INFO] ❌ Exception: {e}")
 
+# ================================
+# 📊 GET TELEMETRY POINTS
+# ================================
 
 @service
 async def suncloud_get_suncloud_points():
     token = state.get("input_text.token")
-    if not token or token == "Error":
-        log.error("[POINTS] No valid token.")
+    if not token:
+        log.error("[POINTS] ❌ No token")
         return
 
-    url = "https://gateway.isolarcloud.eu/openapi/getOpenPointInfo"
-    headers = {"Content-Type": "application/json", "token": token}
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
+
+    url = "https://gateway.isolarcloud.com/openapi/getOpenPointInfo"
+    unenc_key = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
+    headers = build_headers(encrypted_key, access_key, token)
+
     payload = {
         "device_type": 11,
         "type": 2,
         "curPage": 1,
-        "size": 999,
-        "device_model_id": "367701"
+        "size": 999
     }
+
+    encrypted_body = build_encrypted_payload(payload, appkey, token, unenc_key)
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload) as response:
-                data = await response.json()
-                points = data.get("result_data", {}).get("pageList", [])
-                point_ids = [str(p["point_id"]) for p in points if "point_id" in p]
-                state.set("input_select.telemetry_points", {"options": point_ids})
-                log.info(f"[POINTS] {len(point_ids)} telemetry points loaded.")
+            async with session.post(url, headers=headers, data=encrypted_body) as response:
+                raw = await response.text()
+                log.info(f"[POINTS] Encrypted Response: {raw}")
+                decrypted = aes_decrypt(raw, unenc_key)
+                telemetry_points = decrypted.get("result_data", {}).get("pageList", [])
+                if not telemetry_points:
+                    log.warning("[POINTS] ⚠️ No telemetry points returned")
+                    return
+                points = {}
+                for point in telemetry_points:
+                    pid = str(point.get("point_id"))
+                    points[pid] = {
+                        "name": point.get("point_name"),
+                        "unit": point.get("storage_unit", "")
+                    }
+                save_suncloud_config(new_points=points)
+                log.info(f"[POINTS] ✅ Saved {len(points)} telemetry points")
     except Exception as e:
-        log.error(f"[POINTS] Exception: {e}")
+        log.error(f"[POINTS] ❌ Exception: {e}")
 
+# ================================
+# 📶 GET REALTIME VALUES
+# ================================
 
-# 🔐 Encryption Helpers
-def rsa_encrypt_secret_key(secret: str, public_key_base64: str) -> str:
+@service
+async def suncloud_get_realtime_data():
+    token = state.get("input_text.token")
+    if not token:
+        log.error("[REALTIME] ❌ Missing token")
+        return
+
+    appkey = pyscript.app_config["appkey"]
+    access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
+    config = load_suncloud_config()
+    ps_key = config.get("ps_key")
+    points = config.get("points", {})
+
+    if not ps_key or not points:
+        log.error("[REALTIME] ❌ Missing ps_key or points")
+        return
+
+    point_ids = list(points.keys())
+    log.info(f"[REALTIME] 📡 Reading points: {point_ids}")
+
+    url = "https://gateway.isolarcloud.com/openapi/getDeviceRealTimeData"
+    nonce = generate_nonce()
+    timestamp = str(int(time.time() * 1000))
+    random_secret = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(random_secret, rsa_key)
+
+    headers = build_headers(encrypted_key, access_key, token=token)
+
+    payload = {
+        "appkey": appkey,
+        "token": token,
+        "lang": "_en_US",
+        "api_key_param": {"nonce": nonce, "timestamp": timestamp},
+        "device_type": 11,
+        "point_id_list": point_ids,
+        "ps_key_list": [ps_key]
+    }
+
+    encrypted_body = aes_encrypt(json.dumps(payload), random_secret)
+
     try:
-        pubkey_bytes = base64.urlsafe_b64decode(public_key_base64.strip())
-        public_key = serialization.load_der_public_key(pubkey_bytes, backend=default_backend())
-        encrypted = public_key.encrypt(secret.encode("utf-8"), padding.PKCS1v15())
-        return base64.urlsafe_b64encode(encrypted).decode("utf-8")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, data=encrypted_body) as response:
+                raw = await response.text()
+                decrypted = aes_decrypt(raw, random_secret)
+                device_data = decrypted.get("result_data", {}).get("device_point_list", [{}])[0].get("device_point", {})
+                if not device_data:
+                    log.warning("[REALTIME] ⚠️ No device_point returned")
+                    return
+                for key, val in device_data.items():
+                    if not key.startswith("p"):
+                        continue
+                    pid = key[1:]
+                    meta = points.get(pid, {})
+                    sensor_id = f"sensor.suncloud_{pid}"
+                    state.set(sensor_id, val, {
+                        "friendly_name": f"{pid}_{meta.get('name')}",
+                        "unit_of_measurement": meta.get("unit"),
+                        "icon": "mdi:chart-line",
+                        "state_class": "measurement"
+                    })
+                log.info(f"[REALTIME] ✅ Updated {len(device_data)} sensors")
     except Exception as e:
-        log.error(f"[RSA] Encryption error: {e}")
-        return "ENC_ERR"
-
-
-def aes_encrypt(content: str, password: str) -> str:
-    try:
-        key = password.encode("utf-8").ljust(16)[:16]
-        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
-        encryptor = cipher.encryptor()
-        padder = PKCS7(128).padder()
-        padded = padder.update(content.encode("utf-8")) + padder.finalize()
-        encrypted_data = encryptor.update(padded) + encryptor.finalize()
-        return encrypted_data.hex().upper()
-    except Exception as e:
-        log.error(f"[AES] Encrypt error: {e}")
-        return ""
-
-
-def aes_decrypt(content: str, password: str):
-    try:
-        cipher_bytes = bytes.fromhex(content)
-        key = password.encode("utf-8").ljust(16)[:16]
-        cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
-        decryptor = cipher.decryptor()
-        padded = decryptor.update(cipher_bytes) + decryptor.finalize()
-        unpadder = PKCS7(128).unpadder()
-        original = unpadder.update(padded) + unpadder.finalize()
-        return json.loads(original.decode("utf-8"))
-    except Exception as e:
-        log.error(f"[AES] Decrypt error: {e}")
-        return {}
-
-
-def generate_nonce(length=32):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
-
+        log.error(f"[REALTIME] ❌ Exception: {e}")
 
 def generate_random_key(length=16):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
