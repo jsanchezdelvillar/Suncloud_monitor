@@ -304,40 +304,56 @@ async def suncloud_get_suncloud_points():
 
     appkey = pyscript.app_config["appkey"]
     access_key = pyscript.app_config["access_key"]
+    rsa_key = pyscript.app_config["rsa_key"]
 
     url = "https://gateway.isolarcloud.com/openapi/getOpenPointInfo"
-    # Build the payload with the necessary fields, including api_key_param
+    unenc_key = generate_random_key()
+    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
+
+    headers = {
+        "Content-Type": "application/json;charset=UTF-8",
+        "sys_code": "901",
+        "x-access-key": access_key,                  # ✅ Must be plaintext
+        "x-random-secret-key": encrypted_key,        # ✅ Encrypted AES key
+        "token": token
+    }
+    log.info(f"[RSA] Encripting {unenc_key} with {rsa_key}")
+    log.info(f"[HEA] Headers: {headers}")
+
     payload = {
         "appkey": appkey,
         "token": token,
+        "lang": "_en_US",
+        "api_key_param": {
+            "nonce": generate_nonce(),
+            "timestamp": str(int(time.time() * 1000))
+        },
         "device_type": 11,
         "type": 2,
         "curPage": 1,
         "size": 999
     }
-    log.info(f"[POINTS] Payload: {payload}")
-    # Build headers, exclude x-random-secret-key since encryption is not used
-    headers = {
-        "Content-Type": "application/json;charset=UTF-8",
-        "sys_code": "901",
-        "x-access-key": access_key,
-        "token": token
-    }
+    log.info(f"[PAY] Payload: {payload}")
+
+    encrypted_body = aes_encrypt(json.dumps(payload), unenc_key)
+    log.info(f"[AES] Encrypted Body: {encrypted_body[:200]}...")
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post (url, headers=json.dumps(headers), data=json.dumps(payload)) as response:
+            async with session.post(url, headers=headers, data=encrypted_body) as response:
+                log.info(f"[HTTP] Status: {response.status}")
                 raw = await response.text()
-                log.info(f"[POINTS] Unencrypted Response: {raw}")
-                try:
-                    data = json.loads(raw)
-                except Exception as e:
-                    log.error(f"[POINTS] ❌ JSON parse error: {e}")
-                    return
-                telemetry_points = data.get("result_data", {}).get("pageList", [])
+                log.info(f"[POINTS] 🔐 Raw Encrypted Response: {raw[:200]}...")
+
+                decrypted = aes_decrypt(raw, unenc_key)
+                log.info(f"[POINTS] 🧬 Decrypted: {decrypted if decrypted else '{}'}")
+                log.info(f"[POINTS] ✅ result_code: {decrypted.get('result_code')}")
+
+                telemetry_points = decrypted.get("result_data", {}).get("pageList", [])
                 if not telemetry_points:
                     log.warning("[POINTS] ⚠️ No telemetry points returned")
                     return
+
                 points = {}
                 for point in telemetry_points:
                     pid = str(point.get("point_id"))
@@ -345,8 +361,10 @@ async def suncloud_get_suncloud_points():
                         "name": point.get("point_name"),
                         "unit": point.get("storage_unit", "")
                     }
+
                 save_suncloud_config(new_points=points)
                 log.info(f"[POINTS] ✅ Saved {len(points)} telemetry points")
+
     except Exception as e:
         log.error(f"[POINTS] ❌ Exception: {e}")
 
