@@ -304,29 +304,37 @@ async def suncloud_get_suncloud_points():
 
     appkey = pyscript.app_config["appkey"]
     access_key = pyscript.app_config["access_key"]
-    rsa_key = pyscript.app_config["rsa_key"]
 
     url = "https://gateway.isolarcloud.com/openapi/getOpenPointInfo"
-    unenc_key = generate_random_key()
-    encrypted_key = rsa_encrypt_secret_key(unenc_key, rsa_key)
-    headers = build_headers(encrypted_key, access_key, token)
-
+    # Build the payload with the necessary fields, including api_key_param
     payload = {
+        "appkey": appkey,
+        "token": token,
         "device_type": 11,
         "type": 2,
         "curPage": 1,
         "size": 999
     }
-
-    encrypted_body = build_encrypted_payload(payload, appkey, token, unenc_key)
+    log.info(f"[POINTS] Payload: {payload}")
+    # Build headers, exclude x-random-secret-key since encryption is not used
+    headers = {
+        "Content-Type": "application/json;charset=UTF-8",
+        "sys_code": "901",
+        "x-access-key": access_key,
+        "token": token
+    }
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, data=encrypted_body) as response:
+            async with session.post (url, headers=json.dumps(headers), data=json.dumps(payload)) as response:
                 raw = await response.text()
-                log.info(f"[POINTS] Encrypted Response: {raw}")
-                decrypted = aes_decrypt(raw, unenc_key)
-                telemetry_points = decrypted.get("result_data", {}).get("pageList", [])
+                log.info(f"[POINTS] Unencrypted Response: {raw}")
+                try:
+                    data = json.loads(raw)
+                except Exception as e:
+                    log.error(f"[POINTS] ❌ JSON parse error: {e}")
+                    return
+                telemetry_points = data.get("result_data", {}).get("pageList", [])
                 if not telemetry_points:
                     log.warning("[POINTS] ⚠️ No telemetry points returned")
                     return
@@ -411,6 +419,3 @@ async def suncloud_get_realtime_data():
                 log.info(f"[REALTIME] ✅ Updated {len(device_data)} sensors")
     except Exception as e:
         log.error(f"[REALTIME] ❌ Exception: {e}")
-
-def generate_random_key(length=16):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
