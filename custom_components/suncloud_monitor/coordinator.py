@@ -20,17 +20,17 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import *
 
+_LOGGER = logging.getLogger(__name__)
+
 def generate_random_key(length=16):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def generate_nonce(length=32):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-_LOGGER = logging.getLogger(__name__)
-
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
-    """Manages encrypted API calls to SunCloud, loads & updates point data."""
+    """Main encrypted API interface with self-healing logic."""
 
     def __init__(self, hass: HomeAssistant, config: dict):
         self.hass = hass
@@ -59,7 +59,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                     self.points = data.get("points", {})
                     self.ps_key = data.get("ps_key")
                     self.sn = data.get("sn")
-                    _LOGGER.debug(f"[CONFIG] Loaded {len(self.points)} points.")
+                    _LOGGER.debug(f"[CONFIG] Loaded {len(self.points)} points")
         except Exception as e:
             _LOGGER.error(f"[CONFIG] ❌ Failed to load config: {e}")
 
@@ -127,7 +127,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             "token": token,
             "lang": "_en_US",
             "api_key_param": {
-                "nonce": ''.join(random.choices(string.ascii_letters + string.digits, k=32)),
+                "nonce": generate_nonce(),
                 "timestamp": str(int(time.time() * 1000))
             }
         })
@@ -183,6 +183,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 if device.get("device_type") == 22:
                     self.sn = device.get("device_sn") or device.get("communication_dev_sn")
                     if self.sn:
+                        self._save_config_storage()
                         return
             raise UpdateFailed("[REPAIR] ❌ No valid SN found")
 
@@ -200,6 +201,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             self.ps_key = decrypted.get("result_data", {}).get("ps_key")
             if not self.ps_key:
                 raise UpdateFailed("[REPAIR] ❌ ps_key fetch failed")
+            self._save_config_storage()
 
     async def _fetch_points(self):
         url = "https://gateway.isolarcloud.eu/openapi/getOpenPointInfo"
@@ -263,11 +265,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 for key, val in device_data.items():
                     pid = key[1:]  # remove leading 'p'
                     parsed[pid] = val
-                _LOGGER.info(f"[REALTIME] ✅ {len(parsed)} points")
+                _LOGGER.info(f"[REALTIME] ✅ {len(parsed)} points updated")
                 return parsed
         except Exception as e:
             raise UpdateFailed(f"[REALTIME] ❌ Exception: {e}")
-    async def async_close(self):
-        if self.session:
-            await self.session.close()
 
+    async def async_close(self):
+        if self.session and not self.session.closed:
+            await self.session.close()
