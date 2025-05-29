@@ -1,27 +1,19 @@
 {
+  "title": "SunCloud Monitor",
   "config": {
     "step": {
       "user": {
-        "title": "Configuración de Suncloud Monitor",
-        "description": "Configura el acceso a tu cuenta Sungrow iSolarCloud",
-        "data": {
-          "suncloud_username": "Usuario de Sungrow",
-          "suncloud_password": "Contraseña de Sungrow",
-          "suncloud_appkey": "App Key",
-          "suncloud_secret": "Access Key (x-access-key)",
-          "suncloud_rsa_key": "Clave pública RSA (Base64, formato DER X.509)",
-          "ps_key": "Opcional: ps_key de la planta",
-          "base_url": "URL base (dejar predeterminado salvo personalización)"
-        }
+        "title": "Configurar SunCloud",
+        "description": "Introduce tus credenciales de SunCloud"
       }
-    },
-    "error": {
-      "cannot_connect": "No se puede conectar con la API de Sungrow",
-      "invalid_auth": "Autenticación inválida",
-      "unknown": "Error inesperado"
-    },
-    "abort": {
-      "already_configured": "La cuenta ya está configurada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Selección de puntos de sensores",
+        "description": "Elige los puntos de telemetría a rastrear"
+      }
     }
   }
 }
