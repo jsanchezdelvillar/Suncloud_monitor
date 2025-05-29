@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "SunCloud Monitor Setup",
+        "description": "Enter your SunCloud credentials and keys",
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "appkey": "App Key",
+          "access_key": "Access Key",
+          "rsa_key": "RSA Public Key (Base64)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid credentials",
+      "cannot_connect": "Connection failed"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sensor Configuration",
+        "description": "Select which telemetry points you want to enable as sensors",
+        "data": {
+          "enabled_points": "Telemetry Points"
+        }
+      }
+    }
+  }
+}
