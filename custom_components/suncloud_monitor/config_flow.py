@@ -1,18 +1,22 @@
 import voluptuous as vol
+import yaml
+import aiofiles
+from pathlib import Path
+
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
+
 from .const import DOMAIN, CONF_POINTS
 
-import yaml
-from pathlib import Path
 
-
-def load_points_from_yaml(hass):
+async def load_points_from_yaml(hass):
     path = Path(hass.config.path("custom_components/suncloud_monitor/config_storage.yaml"))
     if path.exists():
-        with open(path, "r") as f:
-            return yaml.safe_load(f).get("points", {})
+        async with aiofiles.open(path, "r") as f:
+            raw = await f.read()
+            data = yaml.safe_load(raw)
+            return data.get("points", {})
     return {}
 
 
@@ -41,13 +45,14 @@ class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class SuncloudOptionsFlow(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
+    def __init__(self, entry):  # ✅ updated for 2025.12+ compatibility
+        super().__init__()
+        self._entry = entry
 
     async def async_step_init(self, user_input=None):
-        points = load_points_from_yaml(self.hass)
+        points = await load_points_from_yaml(self.hass)
         all_point_ids = sorted(points.keys())
-        default_selected = self.config_entry.options.get(CONF_POINTS, all_point_ids)
+        default_selected = self._entry.options.get(CONF_POINTS, all_point_ids)
 
         if user_input is not None:
             return self.async_create_entry(title="", data={
