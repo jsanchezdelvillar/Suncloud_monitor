@@ -1,1 +1,3 @@
+# Incremental, add !include to configuration.yaml in pyscript section or, if it doesn't exist, add the whole line.
+
 pyscript: !include pyscript/config.yaml
