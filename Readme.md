@@ -1,16 +1,16 @@
 # 🌞 SunCloud Monitor – Home Assistant Integration
 
-![Version](https://img.shields.io/github/v/tag/YOUR_USERNAME/Suncloud_monitor?label=version)
-![License](https://img.shields.io/github/license/YOUR_USERNAME/Suncloud_monitor)
+![Version](https://img.shields.io/github/v/tag/jsanchezdelvillar/Suncloud_monitor?label=version)
+![License](https://img.shields.io/github/license/jsanchezdelvillar/Suncloud_monitor)
 ![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg?logo=home-assistant)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2023.0+-blue?logo=home-assistant)
 ![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python)
-![Last Commit](https://img.shields.io/github/last-commit/YOUR_USERNAME/Suncloud_monitor)
-![Issues](https://img.shields.io/github/issues/YOUR_USERNAME/Suncloud_monitor)
-![Code size](https://img.shields.io/github/languages/code-size/YOUR_USERNAME/Suncloud_monitor)
-![Build](https://github.com/YOUR_USERNAME/Suncloud_monitor/actions/workflows/ci.yml/badge.svg)
-![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/Suncloud_monitor.svg?style=social)
-![Forks](https://img.shields.io/github/forks/YOUR_USERNAME/Suncloud_monitor.svg?style=social)
+![Last Commit](https://img.shields.io/github/last-commit/jsanchezdelvillar/Suncloud_monitor)
+![Issues](https://img.shields.io/github/issues/jsanchezdelvillar/Suncloud_monitor)
+![Code size](https://img.shields.io/github/languages/code-size/jsanchezdelvillar/Suncloud_monitor)
+![Build](https://github.com/jsanchezdelvillar/Suncloud_monitor/actions/workflows/ci.yml/badge.svg)
+![Stars](https://img.shields.io/github/stars/jsanchezdelvillar/Suncloud_monitor.svg?style=social)
+![Forks](https://img.shields.io/github/forks/jsanchezdelvillar/Suncloud_monitor.svg?style=social)
 
 > Full-featured, encrypted Home Assistant integration for monitoring your SunCloud plant, inverter, and telemetry points.
 
