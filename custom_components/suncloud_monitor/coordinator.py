@@ -5,6 +5,7 @@ import random
 import string
 import time
 from pathlib import Path
+from datetime import timedelta
 
 import aiohttp
 import yaml
@@ -18,6 +19,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import *
+
+def generate_random_key(length=16):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def generate_nonce(length=32):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +48,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="SunCloud Monitor",
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
 
     def _load_config_storage(self):
@@ -260,3 +267,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 return parsed
         except Exception as e:
             raise UpdateFailed(f"[REALTIME] ❌ Exception: {e}")
+    async def async_close(self):
+        if self.session:
+            await self.session.close()
+
