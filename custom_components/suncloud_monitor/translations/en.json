@@ -1,0 +1,19 @@
+{
+  "title": "SunCloud Monitor",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure SunCloud",
+        "description": "Enter credentials for SunCloud access"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Sensor Point Selection",
+        "description": "Choose telemetry points to track"
+      }
+    }
+  }
+}
