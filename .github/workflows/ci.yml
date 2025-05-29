@@ -1,0 +1,30 @@
+name: Validate Home Assistant Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    name: Check Integration Manifest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: 📦 Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install homeassistant
+
+      - name: ✅ Validate manifest.json
+        run: |
+          python -c 'import pathlib, json; print(json.load(open(next(pathlib.Path("custom_components").rglob("manifest.json")))))'
