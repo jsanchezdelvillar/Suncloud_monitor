@@ -1,0 +1,11 @@
+# Incremental file, in case it already exists.
+
+allow_all_imports: true
+hass_is_global: true
+apps:
+  suncloud:
+    appkey: !secret suncloud_appkey
+    access_key: !secret suncloud_access_key
+    rsa_key: !secret suncloud_rsa_key
+    username: !secret suncloud_username
+    password: !secret suncloud_password
