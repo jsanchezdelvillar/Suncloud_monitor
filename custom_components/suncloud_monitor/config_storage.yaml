@@ -1,0 +1,225 @@
+points:
+  '83001':
+    name: Inverter AC power normalization
+    unit: W/Wp
+  '83002':
+    name: Inverter AC power
+    unit: W
+  '83004':
+    name: Inverter total yield
+    unit: Wh
+  '83005':
+    name: Daily equivalent hours of meter
+    unit: h
+  '83006':
+    name: Meter daily yield
+    unit: Wh
+  '83007':
+    name: Meter PR
+    unit: ''
+  '83008':
+    name: Daily equivalent hours of inverter
+    unit: h
+  '83009':
+    name: Daily yield by inverter
+    unit: Wh
+  '83010':
+    name: Inverter PR
+    unit: ''
+  '83011':
+    name: Meter E-daily consumption
+    unit: Wh
+  '83012':
+    name: P-radiation-H
+    unit: "W/\u33A1"
+  '83013':
+    name: Daily irradiation
+    unit: "Wh/\u33A1"
+  '83016':
+    name: Plant ambient temperature
+    unit: "\u2103"
+  '83017':
+    name: Plant module temperature
+    unit: "\u2103"
+  '83018':
+    name: Daily yield (theoretical)
+    unit: Wh
+  '83019':
+    name: Power/installed power of plant
+    unit: ''
+  '83020':
+    name: Meter total yield
+    unit: Wh
+  '83021':
+    name: Accumulative power consumption by meter
+    unit: Wh
+  '83022':
+    name: Daily yield of plant
+    unit: Wh
+  '83023':
+    name: Plant PR
+    unit: ''
+  '83024':
+    name: Plant total yield
+    unit: Wh
+  '83025':
+    name: Plant equivalent hours
+    unit: h
+  '83032':
+    name: Meter AC power
+    unit: W
+  '83033':
+    name: Plant power
+    unit: W
+  '83046':
+    name: PCS total active power
+    unit: W
+  '83052':
+    name: Load power
+    unit: W
+  '83057':
+    name: Plant power
+    unit: W
+  '83067':
+    name: Total active power of PV
+    unit: W
+  '83072':
+    name: Feed-in energy today
+    unit: Wh
+  '83075':
+    name: Total feed-in energy
+    unit: Wh
+  '83076':
+    name: PV total power
+    unit: W
+  '83097':
+    name: Daily load energy consumption from PV
+    unit: Wh
+  '83100':
+    name: Total load energy consumption from PV
+    unit: Wh
+  '83102':
+    name: Energy purchased today
+    unit: Wh
+  '83105':
+    name: Total purchased energy
+    unit: Wh
+  '83106':
+    name: Load power
+    unit: W
+  '83118':
+    name: Daily load consumption
+    unit: Wh
+  '83119':
+    name: Daily feed-in energy (PV)
+    unit: Wh
+  '83124':
+    name: Total load consumption
+    unit: Wh
+  '83233':
+    name: Total field maximum rechargeable power
+    unit: W
+  '83234':
+    name: Total field maximum dischargeable power
+    unit: W
+  '83235':
+    name: Total field chargeable energy
+    unit: Wh
+  '83236':
+    name: Total field dischargeable energy
+    unit: Wh
+  '83237':
+    name: Total field energy storage maximum reactive power
+    unit: W
+  '83238':
+    name: Total field energy storage active power
+    unit: W
+  '83239':
+    name: Total field reactive power
+    unit: var
+  '83240':
+    name: Total field power factor
+    unit: null
+  '83241':
+    name: Total field charge capacity
+    unit: Wh
+  '83242':
+    name: Total field discharge capacity
+    unit: Wh
+  '83243':
+    name: Total field daily charge capacity
+    unit: Wh
+  '83244':
+    name: Total field daily discharge capacity
+    unit: Wh
+  '83252':
+    name: Battery level (SOC)
+    unit: ''
+  '83317':
+    name: Predictive power
+    unit: W
+  '83318':
+    name: Planned ES charging/discharging power
+    unit: W
+  '83319':
+    name: Planned ES SOC
+    unit: W
+  '83320':
+    name: Planned charging power
+    unit: Wh
+  '83321':
+    name: Planned discharging power
+    unit: Wh
+  '83322':
+    name: ESS daily charge
+    unit: Wh
+  '83323':
+    name: ESS daily discharge
+    unit: Wh
+  '83324':
+    name: ESS total charge
+    unit: Wh
+  '83325':
+    name: ESS total discharge
+    unit: Wh
+  '83326':
+    name: Energy storage active power
+    unit: W
+  '83327':
+    name: Energy storage remaining charge
+    unit: Wh
+  '83328':
+    name: Grid active power
+    unit: W
+  '83329':
+    name: PV active power
+    unit: W
+  '83330':
+    name: Load active power
+    unit: W
+  '83331':
+    name: Daily PV yield
+    unit: Wh
+  '83332':
+    name: Total PV yield
+    unit: Wh
+  '83334':
+    name: Online SOC
+    unit: ''
+  '83419':
+    name: Daily highest inverter power/inverter installed capacity
+    unit: null
+  '83512':
+    name: Average irradiation intensity
+    unit: "W/\u33A1"
+  '83516':
+    name: Average total irradiance
+    unit: "Wh/\u33A1"
+  '83548':
+    name: Total number of charge/discharge
+    unit: null
+  '83549':
+    name: Grid active power
+    unit: W
+ps_key: '5694969_11_0_0'
+sn: B2330310920
