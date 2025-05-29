@@ -1,8 +1,0 @@
-- id: refresh_telemetry_points
-  alias: Refresh Suncloud Telemetry Points
-  trigger:
-    - platform: time_pattern
-      minutes: "/30"
-  action:
-    - service: pyscript.get_suncloud_points
-  mode: single
