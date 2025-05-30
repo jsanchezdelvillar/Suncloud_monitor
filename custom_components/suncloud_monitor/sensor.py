@@ -33,3 +33,17 @@ class SuncloudSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         data = self.coordinator.data or {}
         return data.get(self._point_id)
+
+    @property
+    def device_info(self):
+        ps_id = getattr(self.coordinator, "ps_id", None)
+        if not ps_id:
+            # Fallback to a constant if ps_id is missing (should rarely happen after setup)
+            ps_id = "unknown_plant"
+        return {
+            "identifiers": {(DOMAIN, str(ps_id))},
+            "name": f"SunCloud Plant {ps_id}",
+            "manufacturer": "Sungrow",
+            "model": "SunCloud Monitor",
+            "sw_version": "1.0.0"
+        }
