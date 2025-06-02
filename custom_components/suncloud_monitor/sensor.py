@@ -16,7 +16,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
             unit=meta.get("unit", ""),
         )
         entities.append(sensor)
-
     async_add_entities(entities, True)
 
 
@@ -45,5 +44,5 @@ class SuncloudSensor(CoordinatorEntity, SensorEntity):
             "name": f"SunCloud Plant {ps_id}",
             "manufacturer": "Sungrow",
             "model": "SunCloud Monitor",
-            "sw_version": "1.0.0"
+            "sw_version": "1.0.0",
         }
