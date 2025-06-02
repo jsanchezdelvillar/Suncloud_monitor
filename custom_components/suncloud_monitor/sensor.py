@@ -1,8 +1,8 @@
-from homeassistant.helpers.entity import Entity
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
@@ -18,6 +18,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         entities.append(sensor)
 
     async_add_entities(entities, True)
+
 
 class SuncloudSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, point_id, name, unit):
@@ -47,3 +48,4 @@ class SuncloudSensor(CoordinatorEntity, SensorEntity):
             "model": "SunCloud Monitor",
             "sw_version": "1.0.0"
         }
+
