@@ -12,7 +12,9 @@ from .const import DOMAIN, CONF_POINTS
 
 async def load_points_from_yaml(hass):
     path = Path(
-        hass.config.path("custom_components/suncloud_monitor/config_storage.yaml")
+        hass.config.path(
+            "custom_components/suncloud_monitor/config_storage.yaml"
+        )
     )
     if path.exists():
         async with aiofiles.open(path, "r") as f:
