@@ -39,7 +39,6 @@ class SuncloudSensor(CoordinatorEntity, SensorEntity):
     def device_info(self):
         ps_id = getattr(self.coordinator, "ps_id", None)
         if not ps_id:
-            # Fallback to a constant if ps_id is missing (should rarely happen after setup)
             ps_id = "unknown_plant"
         return {
             "identifiers": {(DOMAIN, str(ps_id))},
@@ -48,4 +47,3 @@ class SuncloudSensor(CoordinatorEntity, SensorEntity):
             "model": "SunCloud Monitor",
             "sw_version": "1.0.0"
         }
-
