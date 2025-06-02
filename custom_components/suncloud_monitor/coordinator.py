@@ -28,18 +28,21 @@ from .const import (
     CONF_USERNAME,
     CONF_PASSWORD,
     CONF_RSA_KEY,
-    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def generate_random_key(length=16):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    return ''.join(
+        random.choices(string.ascii_letters + string.digits, k=length)
+    )
 
 
 def generate_nonce(length=32):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    return ''.join(
+        random.choices(string.ascii_letters + string.digits, k=length)
+    )
 
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
@@ -52,14 +55,18 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         self.sn = None
         self.ps_key = None
         self._session = None
-        self.storage_path = Path(hass.config.path(CONFIG_STORAGE_FILE))
+        self.storage_path = Path(
+            hass.config.path(CONFIG_STORAGE_FILE)
+        )
         super().__init__(
             hass,
             _LOGGER,
             name="SunCloud Monitor",
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
-        hass.bus.async_listen_once("homeassistant_stop", self._on_shutdown)
+        hass.bus.async_listen_once(
+            "homeassistant_stop", self._on_shutdown
+        )
 
     @property
     def session(self):
@@ -70,7 +77,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     async def _load_config_storage(self):
         try:
             if self.storage_path.exists():
-                async with aiofiles.open(self.storage_path, "r") as f:
+                async with aiofiles.open(
+                    self.storage_path, "r"
+                ) as f:
                     raw = await f.read()
                 data = yaml.safe_load(raw) or {}
                 self.points = data.get("points", {})
@@ -86,7 +95,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 "ps_key": self.ps_key,
                 "sn": self.sn
             })
-            async with aiofiles.open(self.storage_path, "w") as f:
+            async with aiofiles.open(
+                self.storage_path, "w"
+            ) as f:
                 await f.write(dump)
         except Exception as e:
             _LOGGER.error("[CONFIG] ❌ Save failed: %s", e)
@@ -95,8 +106,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         try:
             pubkey_bytes = base64.urlsafe_b64decode(pubkey_b64.strip())
             pubkey = serialization.load_der_public_key(
-                pubkey_bytes, backend=default_backend())
-            encrypted = pubkey.encrypt(secret.encode(), rsa_padding.PKCS1v15())
+                pubkey_bytes, backend=default_backend()
+            )
+            encrypted = pubkey.encrypt(
+                secret.encode(), rsa_padding.PKCS1v15()
+            )
             return base64.urlsafe_b64encode(encrypted).decode()
         except Exception as e:
             _LOGGER.error("[RSA] ❌ %s", e)
@@ -106,7 +120,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         try:
             key = password.encode().ljust(16)[:16]
             cipher = Cipher(
-                algorithms.AES(key), modes.ECB(), backend=default_backend()
+                algorithms.AES(key),
+                modes.ECB(),
+                backend=default_backend()
             )
             padder = PKCS7(128).padder()
             padded = padder.update(content.encode()) + padder.finalize()
@@ -121,10 +137,14 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         try:
             key = password.encode().ljust(16)[:16]
             cipher = Cipher(
-                algorithms.AES(key), modes.ECB(), backend=default_backend()
+                algorithms.AES(key),
+                modes.ECB(),
+                backend=default_backend()
             )
             decryptor = cipher.decryptor()
-            decrypted = decryptor.update(bytes.fromhex(content)) + decryptor.finalize()
+            decrypted = decryptor.update(
+                bytes.fromhex(content)
+            ) + decryptor.finalize()
             unpadder = PKCS7(128).unpadder()
             unpadded = unpadder.update(decrypted) + unpadder.finalize()
             return json.loads(unpadded.decode())
@@ -162,7 +182,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         await self._load_config_storage()
         url = "https://gateway.isolarcloud.eu/openapi/login"
         unenc_key = generate_random_key()
-        encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
+        encrypted_key = self._rsa_encrypt(
+            unenc_key, self.config[CONF_RSA_KEY]
+        )
         payload = {
             "api_key_param": {
                 "nonce": generate_nonce(),
@@ -174,7 +196,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             "user_password": self.config[CONF_PASSWORD]
         }
         _LOGGER.debug("[LOGIN] 🔓 %s", json.dumps(payload))
-        encrypted_body = self._aes_encrypt(json.dumps(payload), unenc_key)
+        encrypted_body = self._aes_encrypt(
+            json.dumps(payload), unenc_key
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key),
@@ -205,9 +229,13 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     async def _fetch_ps_id(self):
         url = "https://gateway.isolarcloud.eu/openapi/getPowerStationList"
         unenc_key = generate_random_key()
-        encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
+        encrypted_key = self._rsa_encrypt(
+            unenc_key, self.config[CONF_RSA_KEY]
+        )
         payload = {"curPage": 1, "size": 1}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload, self.token, unenc_key
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -223,9 +251,17 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     async def _fetch_sn(self):
         url = "https://gateway.isolarcloud.eu/openapi/getDeviceList"
         unenc_key = generate_random_key()
-        encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
-        payload = {"curPage": 1, "size": 50, "ps_id": self.ps_id}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_key = self._rsa_encrypt(
+            unenc_key, self.config[CONF_RSA_KEY]
+        )
+        payload = {
+            "curPage": 1,
+            "size": 50,
+            "ps_id": self.ps_id
+        }
+        encrypted_payload = self._build_encrypted_payload(
+            payload, self.token, unenc_key
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -241,9 +277,13 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     async def _fetch_ps_key(self):
         url = "https://gateway.isolarcloud.eu/openapi/getPowerStationKey"
         unenc_key = generate_random_key()
-        encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
+        encrypted_key = self._rsa_encrypt(
+            unenc_key, self.config[CONF_RSA_KEY]
+        )
         payload = {"ps_id": self.ps_id}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload, self.token, unenc_key
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -259,9 +299,13 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     async def _fetch_points(self):
         url = "https://gateway.isolarcloud.eu/openapi/getTelemetryPointList"
         unenc_key = generate_random_key()
-        encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
+        encrypted_key = self._rsa_encrypt(
+            unenc_key, self.config[CONF_RSA_KEY]
+        )
         payload = {"ps_id": self.ps_id}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload, self.token, unenc_key
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -272,22 +316,30 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[POINTS] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data", [])
-            self.points = {str(point["id"]): point for point in result_data}
+            self.points = {
+                str(point["id"]): point for point in result_data
+            }
             await self._save_config_storage()
 
     async def _async_update_data(self):
         try:
             await self._ensure_ready()
             point_ids = list(self.points.keys())
-            url = "https://gateway.isolarcloud.eu/openapi/getDeviceRealTimeData"
+            url = (
+                "https://gateway.isolarcloud.eu/openapi/getDeviceRealTimeData"
+            )
             unenc_key = generate_random_key()
-            encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
+            encrypted_key = self._rsa_encrypt(
+                unenc_key, self.config[CONF_RSA_KEY]
+            )
             payload = {
                 "device_type": 11,
                 "point_id_list": point_ids,
                 "ps_key_list": [self.ps_key]
             }
-            encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+            encrypted_payload = self._build_encrypted_payload(
+                payload, self.token, unenc_key
+            )
             async with self.session.post(
                 url,
                 headers=self._build_headers(encrypted_key, self.token),
@@ -296,18 +348,32 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 raw = await response.text()
                 _LOGGER.debug("[REALTIME] 🔐 %s", raw[:500])
                 decrypted = self._aes_decrypt(raw, unenc_key)
-                _LOGGER.debug("[REALTIME] 🔓 %s", json.dumps(decrypted, indent=2))
+                _LOGGER.debug(
+                    "[REALTIME] 🔓 %s",
+                    json.dumps(decrypted, indent=2)
+                )
                 if not decrypted or not isinstance(decrypted, dict):
-                    raise UpdateFailed("[REALTIME] ❌ Decryption failed")
+                    raise UpdateFailed(
+                        "[REALTIME] ❌ Decryption failed"
+                    )
                 result_data = decrypted.get("result_data")
                 if not result_data:
-                    raise UpdateFailed("[REALTIME] ❌ Missing result_data")
+                    raise UpdateFailed(
+                        "[REALTIME] ❌ Missing result_data"
+                    )
                 device_list = result_data.get("device_point_list", [])
-                device_data = device_list[0].get("device_point", {}) if device_list else {}
+                device_data = (
+                    device_list[0].get("device_point", {})
+                    if device_list else {}
+                )
                 parsed = {
-                    key[1:]: val for key, val in device_data.items() if key.startswith("p")
+                    key[1:]: val
+                    for key, val in device_data.items()
+                    if key.startswith("p")
                 }
-                _LOGGER.info("[REALTIME] ✅ %d points updated", len(parsed))
+                _LOGGER.info(
+                    "[REALTIME] ✅ %d points updated", len(parsed)
+                )
                 return parsed
         except Exception as e:
             raise UpdateFailed(f"[REALTIME] ❌ Exception: {e}")
@@ -319,4 +385,3 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     @callback
     async def _on_shutdown(self, _event):
         await self.async_close()
-
