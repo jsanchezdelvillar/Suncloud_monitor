@@ -1,28 +1,37 @@
 import pytest
 from custom_components.suncloud_monitor import async_setup_entry, async_unload_entry
 
+
 class DummyEntry:
     def __init__(self, entry_id, data):
         self.entry_id = entry_id
         self.data = data
 
+
 class DummyConfigEntries:
     async def async_forward_entry_setups(self, entry, platforms):
         return True
+
     async def async_unload_platforms(self, entry, platforms):
         return True
+
 
 class DummyHass:
     def __init__(self):
         self.data = {}
         self.config_entries = DummyConfigEntries()
 
+
 @pytest.mark.asyncio
 async def test_async_setup_entry_adds_coordinator(monkeypatch):
     from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinator
 
-    async def dummy_refresh(self): pass
-    monkeypatch.setattr(SuncloudDataCoordinator, "async_config_entry_first_refresh", dummy_refresh)
+    async def dummy_refresh(self):
+        pass
+
+    monkeypatch.setattr(
+        SuncloudDataCoordinator, "async_config_entry_first_refresh", dummy_refresh
+    )
 
     hass = DummyHass()
     entry = DummyEntry("id123", {})
@@ -30,10 +39,14 @@ async def test_async_setup_entry_adds_coordinator(monkeypatch):
     assert result is True
     assert "id123" in hass.data["suncloud_monitor"]
 
+
 @pytest.mark.asyncio
 async def test_async_unload_entry_removes_coordinator(monkeypatch):
     from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinator
-    async def dummy_close(self): pass
+
+    async def dummy_close(self):
+        pass
+
     monkeypatch.setattr(SuncloudDataCoordinator, "async_close", dummy_close)
 
     hass = DummyHass()
