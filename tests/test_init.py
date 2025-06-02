@@ -16,10 +16,15 @@ class DummyConfigEntries:
         return True
 
 
+class DummyConfig:
+    def path(self, filename):
+        return filename  # Or f"/tmp/{filename}"
+
+
 class DummyHass:
     def __init__(self):
         self.data = {}
-        self.config = {}
+        self.config = DummyConfig()
         self.config_entries = DummyConfigEntries()
 
 
