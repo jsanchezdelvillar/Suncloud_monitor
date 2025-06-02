@@ -52,7 +52,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          pytest --cov=custom_components tests
+          PYTHONPATH=$PWD pytest --cov=custom_components tests
 
       - name: Hassfest validation
         run: |
