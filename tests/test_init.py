@@ -21,11 +21,17 @@ class DummyConfig:
         return filename  # Or f"/tmp/{filename}"
 
 
+class DummyBus:
+    async def async_listen_once(self, event, callback):
+        pass  # Do nothing for the test
+
+
 class DummyHass:
     def __init__(self):
         self.data = {}
         self.config = DummyConfig()
         self.config_entries = DummyConfigEntries()
+        self.bus = DummyBus()
 
 
 @pytest.mark.asyncio
