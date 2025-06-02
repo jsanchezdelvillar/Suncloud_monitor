@@ -1,24 +1,23 @@
-name: Home Assistant CI
+name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -28,44 +27,43 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install test dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov
+          pip install -r requirements.txt || true
           pip install -r requirements_test_all_custom.txt
-          pip install homeassistant
-          pip install hacs
-          pip install black flake8 mypy
-          pip install -r requirements.txt || true  # in case you create one later
+          pip install pytest pytest-cov pytest-asyncio flake8 black mypy hacs
 
       - name: Lint with flake8
         run: |
-          flake8 custom_components
+          flake8 custom_components tests
 
       - name: Lint with black
         run: |
-          black --check custom_components
+          black --check custom_components tests
 
-      - name: Type checking with mypy
+      - name: Type check with mypy
         run: |
-          mypy custom_components || true  # Remove '|| true' if you want to fail on typing errors
+          mypy custom_components || true
 
-      - name: Run pytest
+      - name: Run tests with coverage
         run: |
-          PYTHONPATH=$PWD pytest --cov=custom_components tests
+          PYTHONPATH=$PWD pytest --cov=custom_components --cov-report=xml tests
 
-      - name: Hassfest validation
+      - name: Hassfest validation (custom integration)
         run: |
           git clone --depth=1 https://github.com/home-assistant/core.git ../core
-          python3 -m script.hassfest --action validate --integration-path custom_components
+          cd ../core
+          python3 -m script.hassfest --action validate --integration-path ../Suncloud_monitor/custom_components
 
       - name: HACS validation
         uses: hacs/action@main
+        with:
+          category: integration
 
-      - name: Upload coverage to Codecov (optional)
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
-        continue-on-error: true
-
-  # Add more jobs if you want to test multiple Python versions, OS, etc.
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
