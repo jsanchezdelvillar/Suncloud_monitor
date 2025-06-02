@@ -19,6 +19,7 @@ class DummyConfigEntries:
 class DummyHass:
     def __init__(self):
         self.data = {}
+        self.config = {}
         self.config_entries = DummyConfigEntries()
 
 
