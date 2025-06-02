@@ -18,7 +18,10 @@ from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.backends import default_backend
 
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import (
+    DataUpdateCoordinator,
+    UpdateFailed,
+)
 
 from .const import (
     CONFIG_STORAGE_FILE,
@@ -207,7 +210,10 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             raw = await response.text()
             _LOGGER.debug("[LOGIN] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug("[LOGIN] 🔓 %s", json.dumps(decrypted, indent=2))
+            _LOGGER.debug(
+                "[LOGIN] 🔓 %s",
+                json.dumps(decrypted, indent=2),
+            )
             if not decrypted or not isinstance(decrypted, dict):
                 raise UpdateFailed("[AUTH] ❌ Decryption failed")
             self.token = decrypted.get("result_data", {}).get("token")
