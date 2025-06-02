@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov
-          pip install -r https://raw.githubusercontent.com/home-assistant/core/dev/requirements_test_all.txt
+          pip install -r requirements_test_all_custom.txt
           pip install homeassistant
           pip install hacs
           pip install black flake8 mypy
