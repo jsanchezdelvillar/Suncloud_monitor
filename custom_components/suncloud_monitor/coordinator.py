@@ -166,7 +166,9 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             headers["token"] = token
         return headers
 
-    def _build_encrypted_payload(self, payload: dict, token: str, unenc_key: str):
+    def _build_encrypted_payload(
+        self, payload: dict, token: str, unenc_key: str
+    ):
         payload.update({
             "appkey": self.config[CONF_APPKEY],
             "token": token,
