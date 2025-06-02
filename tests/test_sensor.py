@@ -10,10 +10,7 @@ class DummyCoordinator:
 def test_sensor_entity_creation():
     coordinator = DummyCoordinator()
     sensor = SuncloudSensor(
-        coordinator=coordinator,
-        point_id="123",
-        name="Test Point",
-        unit="Wh"
+        coordinator=coordinator, point_id="123", name="Test Point", unit="Wh"
     )
     assert sensor._attr_unique_id == "suncloud_123"
     assert sensor._attr_name == "Test Point"
@@ -24,10 +21,7 @@ def test_sensor_entity_creation():
 def test_native_value_returns_data():
     coordinator = DummyCoordinator(data={"123": 42})
     sensor = SuncloudSensor(
-        coordinator=coordinator,
-        point_id="123",
-        name="Test Point",
-        unit="Wh"
+        coordinator=coordinator, point_id="123", name="Test Point", unit="Wh"
     )
     assert sensor.native_value == 42
 
@@ -35,10 +29,7 @@ def test_native_value_returns_data():
 def test_native_value_returns_none_if_no_data():
     coordinator = DummyCoordinator(data=None)
     sensor = SuncloudSensor(
-        coordinator=coordinator,
-        point_id="999",
-        name="Test Point",
-        unit="Wh"
+        coordinator=coordinator, point_id="999", name="Test Point", unit="Wh"
     )
     assert sensor.native_value is None
 
@@ -46,10 +37,7 @@ def test_native_value_returns_none_if_no_data():
 def test_device_info_with_ps_id():
     coordinator = DummyCoordinator(ps_id="plant123")
     sensor = SuncloudSensor(
-        coordinator=coordinator,
-        point_id="123",
-        name="Test Point",
-        unit="Wh"
+        coordinator=coordinator, point_id="123", name="Test Point", unit="Wh"
     )
     info = sensor.device_info
     assert info["identifiers"] == {("suncloud_monitor", "plant123")}
@@ -59,10 +47,7 @@ def test_device_info_with_ps_id():
 def test_device_info_without_ps_id():
     coordinator = DummyCoordinator(ps_id=None)
     sensor = SuncloudSensor(
-        coordinator=coordinator,
-        point_id="123",
-        name="Test Point",
-        unit="Wh"
+        coordinator=coordinator, point_id="123", name="Test Point", unit="Wh"
     )
     info = sensor.device_info
     assert info["identifiers"] == {("suncloud_monitor", "unknown_plant")}
