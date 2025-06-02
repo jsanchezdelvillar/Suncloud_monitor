@@ -1,4 +1,3 @@
-import pytest
 from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinator
 import json
 
@@ -34,7 +33,6 @@ def test_aes_encrypt_and_decrypt_roundtrip():
     coordinator = SuncloudDataCoordinator(DummyHass(), {})
     secret = "secret-message"
     password = "password"
-    encrypted = coordinator._aes_encrypt(secret, password)
     # _aes_decrypt expects hex and returns JSON, so use a JSON string
     secret_json = json.dumps({"msg": secret})
     encrypted_json = coordinator._aes_encrypt(secret_json, password)
