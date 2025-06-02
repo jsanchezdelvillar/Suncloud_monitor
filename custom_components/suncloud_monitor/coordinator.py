@@ -20,7 +20,16 @@ from cryptography.hazmat.backends import default_backend
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import *
+from .const import (
+    CONFIG_STORAGE_FILE,
+    DEFAULT_SCAN_INTERVAL,
+    CONF_ACCESS_KEY,
+    CONF_APPKEY,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_RSA_KEY,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,12 +72,12 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             if self.storage_path.exists():
                 async with aiofiles.open(self.storage_path, "r") as f:
                     raw = await f.read()
-                    data = yaml.safe_load(raw) or {}
-                    self.points = data.get("points", {})
-                    self.ps_key = data.get("ps_key")
-                    self.sn = data.get("sn")
+                data = yaml.safe_load(raw) or {}
+                self.points = data.get("points", {})
+                self.ps_key = data.get("ps_key")
+                self.sn = data.get("sn")
         except Exception as e:
-            _LOGGER.error(f"[CONFIG] ❌ Failed to load config: {e}")
+            _LOGGER.error("[CONFIG] ❌ Failed to load config: %s", e)
 
     async def _save_config_storage(self, selected_points=None):
         try:
@@ -80,41 +89,47 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             async with aiofiles.open(self.storage_path, "w") as f:
                 await f.write(dump)
         except Exception as e:
-            _LOGGER.error(f"[CONFIG] ❌ Save failed: {e}")
+            _LOGGER.error("[CONFIG] ❌ Save failed: %s", e)
+
     def _rsa_encrypt(self, secret: str, pubkey_b64: str) -> str:
         try:
             pubkey_bytes = base64.urlsafe_b64decode(pubkey_b64.strip())
-            pubkey = serialization.load_der_public_key(pubkey_bytes, backend=default_backend())
+            pubkey = serialization.load_der_public_key(
+                pubkey_bytes, backend=default_backend())
             encrypted = pubkey.encrypt(secret.encode(), rsa_padding.PKCS1v15())
             return base64.urlsafe_b64encode(encrypted).decode()
         except Exception as e:
-            _LOGGER.error(f"[RSA] ❌ {e}")
+            _LOGGER.error("[RSA] ❌ %s", e)
             return ""
 
     def _aes_encrypt(self, content: str, password: str) -> str:
         try:
             key = password.encode().ljust(16)[:16]
-            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+            cipher = Cipher(
+                algorithms.AES(key), modes.ECB(), backend=default_backend()
+            )
             padder = PKCS7(128).padder()
             padded = padder.update(content.encode()) + padder.finalize()
             encryptor = cipher.encryptor()
             encrypted = encryptor.update(padded) + encryptor.finalize()
             return encrypted.hex().upper()
         except Exception as e:
-            _LOGGER.error(f"[AES] ❌ {e}")
+            _LOGGER.error("[AES] ❌ %s", e)
             return ""
 
     def _aes_decrypt(self, content: str, password: str):
         try:
             key = password.encode().ljust(16)[:16]
-            cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=default_backend())
+            cipher = Cipher(
+                algorithms.AES(key), modes.ECB(), backend=default_backend()
+            )
             decryptor = cipher.decryptor()
             decrypted = decryptor.update(bytes.fromhex(content)) + decryptor.finalize()
             unpadder = PKCS7(128).unpadder()
             unpadded = unpadder.update(decrypted) + unpadder.finalize()
             return json.loads(unpadded.decode())
         except Exception as e:
-            _LOGGER.error(f"[AES] ❌ {e}")
+            _LOGGER.error("[AES] ❌ %s", e)
             return None
 
     def _build_headers(self, encrypted_key, token=None):
@@ -138,10 +153,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 "timestamp": str(int(time.time() * 1000))
             }
         })
-        _LOGGER.debug(f"[PAYLOAD] 🔓 {json.dumps(payload)}")
+        _LOGGER.debug("[PAYLOAD] 🔓 %s", json.dumps(payload))
         encrypted = self._aes_encrypt(json.dumps(payload), unenc_key)
-        _LOGGER.debug(f"[PAYLOAD] 🔐 {encrypted[:200]}...")
+        _LOGGER.debug("[PAYLOAD] 🔐 %s...", encrypted[:200])
         return encrypted
+
     async def _authenticate(self):
         await self._load_config_storage()
         url = "https://gateway.isolarcloud.eu/openapi/login"
@@ -157,13 +173,17 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             "user_account": self.config[CONF_USERNAME],
             "user_password": self.config[CONF_PASSWORD]
         }
-        _LOGGER.debug(f"[LOGIN] 🔓 {json.dumps(payload)}")
+        _LOGGER.debug("[LOGIN] 🔓 %s", json.dumps(payload))
         encrypted_body = self._aes_encrypt(json.dumps(payload), unenc_key)
-        async with self.session.post(url, headers=self._build_headers(encrypted_key), data=encrypted_body) as response:
+        async with self.session.post(
+            url,
+            headers=self._build_headers(encrypted_key),
+            data=encrypted_body
+        ) as response:
             raw = await response.text()
-            _LOGGER.debug(f"[LOGIN] 🔐 {raw[:500]}")
+            _LOGGER.debug("[LOGIN] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug(f"[LOGIN] 🔓 {json.dumps(decrypted, indent=2)}")
+            _LOGGER.debug("[LOGIN] 🔓 %s", json.dumps(decrypted, indent=2))
             if not decrypted or not isinstance(decrypted, dict):
                 raise UpdateFailed("[AUTH] ❌ Decryption failed")
             self.token = decrypted.get("result_data", {}).get("token")
@@ -181,17 +201,22 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             await self._fetch_ps_key()
         if not self.points:
             await self._fetch_points()
+
     async def _fetch_ps_id(self):
         url = "https://gateway.isolarcloud.eu/openapi/getPowerStationList"
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"curPage": 1, "size": 1}
         encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
-        async with self.session.post(url, headers=self._build_headers(encrypted_key, self.token), data=encrypted_payload) as response:
+        async with self.session.post(
+            url,
+            headers=self._build_headers(encrypted_key, self.token),
+            data=encrypted_payload
+        ) as response:
             raw = await response.text()
-            _LOGGER.debug(f"[PS_ID] 🔐 {raw[:500]}")
+            _LOGGER.debug("[PS_ID] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug(f"[PS_ID] 🔓 {json.dumps(decrypted, indent=2)}")
+            _LOGGER.debug("[PS_ID] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
             self.ps_id = result_data.get("pageList", [{}])[0].get("ps_id")
 
@@ -201,11 +226,15 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"curPage": 1, "size": 50, "ps_id": self.ps_id}
         encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
-        async with self.session.post(url, headers=self._build_headers(encrypted_key, self.token), data=encrypted_payload) as response:
+        async with self.session.post(
+            url,
+            headers=self._build_headers(encrypted_key, self.token),
+            data=encrypted_payload
+        ) as response:
             raw = await response.text()
-            _LOGGER.debug(f"[SN] 🔐 {raw[:500]}")
+            _LOGGER.debug("[SN] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug(f"[SN] 🔓 {json.dumps(decrypted, indent=2)}")
+            _LOGGER.debug("[SN] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
             self.sn = result_data.get("pageList", [{}])[0].get("sn")
 
@@ -215,24 +244,33 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"ps_id": self.ps_id}
         encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
-        async with self.session.post(url, headers=self._build_headers(encrypted_key, self.token), data=encrypted_payload) as response:
+        async with self.session.post(
+            url,
+            headers=self._build_headers(encrypted_key, self.token),
+            data=encrypted_payload
+        ) as response:
             raw = await response.text()
-            _LOGGER.debug(f"[PS_KEY] 🔐 {raw[:500]}")
+            _LOGGER.debug("[PS_KEY] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug(f"[PS_KEY] 🔓 {json.dumps(decrypted, indent=2)}")
+            _LOGGER.debug("[PS_KEY] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
             self.ps_key = result_data.get("ps_key")
+
     async def _fetch_points(self):
         url = "https://gateway.isolarcloud.eu/openapi/getTelemetryPointList"
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"ps_id": self.ps_id}
         encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
-        async with self.session.post(url, headers=self._build_headers(encrypted_key, self.token), data=encrypted_payload) as response:
+        async with self.session.post(
+            url,
+            headers=self._build_headers(encrypted_key, self.token),
+            data=encrypted_payload
+        ) as response:
             raw = await response.text()
-            _LOGGER.debug(f"[POINTS] 🔐 {raw[:500]}")
+            _LOGGER.debug("[POINTS] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
-            _LOGGER.debug(f"[POINTS] 🔓 {json.dumps(decrypted, indent=2)}")
+            _LOGGER.debug("[POINTS] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data", [])
             self.points = {str(point["id"]): point for point in result_data}
             await self._save_config_storage()
@@ -250,11 +288,15 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 "ps_key_list": [self.ps_key]
             }
             encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
-            async with self.session.post(url, headers=self._build_headers(encrypted_key, self.token), data=encrypted_payload) as response:
+            async with self.session.post(
+                url,
+                headers=self._build_headers(encrypted_key, self.token),
+                data=encrypted_payload
+            ) as response:
                 raw = await response.text()
-                _LOGGER.debug(f"[REALTIME] 🔐 {raw[:500]}")
+                _LOGGER.debug("[REALTIME] 🔐 %s", raw[:500])
                 decrypted = self._aes_decrypt(raw, unenc_key)
-                _LOGGER.debug(f"[REALTIME] 🔓 {json.dumps(decrypted, indent=2)}")
+                _LOGGER.debug("[REALTIME] 🔓 %s", json.dumps(decrypted, indent=2))
                 if not decrypted or not isinstance(decrypted, dict):
                     raise UpdateFailed("[REALTIME] ❌ Decryption failed")
                 result_data = decrypted.get("result_data")
@@ -265,7 +307,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 parsed = {
                     key[1:]: val for key, val in device_data.items() if key.startswith("p")
                 }
-                _LOGGER.info(f"[REALTIME] ✅ {len(parsed)} points updated")
+                _LOGGER.info("[REALTIME] ✅ %d points updated", len(parsed))
                 return parsed
         except Exception as e:
             raise UpdateFailed(f"[REALTIME] ❌ Exception: {e}")
@@ -277,3 +319,4 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     @callback
     async def _on_shutdown(self, _event):
         await self.async_close()
+
