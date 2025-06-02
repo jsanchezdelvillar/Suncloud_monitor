@@ -50,9 +50,6 @@ jobs:
         run: |
           mypy custom_components || true  # Remove '|| true' if you want to fail on typing errors
 
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
-        
       - name: Run pytest
         run: |
           pytest --cov=custom_components tests
