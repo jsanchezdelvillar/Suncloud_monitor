@@ -33,6 +33,7 @@ jobs:
           pip install -r requirements.txt || true
           pip install -r requirements_test_all_custom.txt
           pip install pytest pytest-cov pytest-asyncio flake8 black mypy hacs
+          pip install tqdm
 
       - name: Lint with flake8
         run: |
