@@ -52,10 +52,10 @@ jobs:
 
       - name: Hassfest validation (custom integration)
         run: |
-          git clone --depth=1 https://github.com/home-assistant/core.git ../core
+          git clone --depth=1 --branch 2024.5.3 https://github.com/home-assistant/core.git ../core
           cd ../core
           python3 -m script.hassfest --action validate --integration-path ../Suncloud_monitor/custom_components
-
+          
       - name: HACS validation
         uses: hacs/action@main
         with:
