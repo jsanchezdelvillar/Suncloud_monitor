@@ -244,7 +244,15 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[SN] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
-            self.sn = result_data.get("pageList", [{}])[0].get("device_sn")
+            page_list = result_data.get("pageList", [])
+            comm_sn = None
+            # Find the communication module and use its communication_dev_sn
+            for device in page_list:
+                comm_sn = device.get("communication_dev_sn")
+                # Make sure it's not null and device type is 'Communication module'
+                if comm_sn and device.get("type_name", "").lower() == "communication module":
+                    break
+            self.sn = comm_sn
 
     async def _fetch_ps_key(self):
         url = "https://gateway.isolarcloud.eu/openapi/getPowerStationDetail"
