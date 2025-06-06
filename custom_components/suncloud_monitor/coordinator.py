@@ -297,8 +297,14 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("[POINTS] 🔐 %s", raw[:500])
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[POINTS] 🔓 %s", json.dumps(decrypted, indent=2))
-            result_data = decrypted.get("result_data", [])
-            self.points = {str(point["id"]): point for point in result_data}
+            result_data = decrypted.get("result_data")
+            if isinstance(result_data, dict):
+                points_list = result_data.get("pageList", [])
+            elif isinstance(result_data, list):
+                points_list = result_data
+            else:
+                points_list = []
+            self.points = {str(point.get("id", point.get("point_id"))): point for point in points_list}
             await self._save_config_storage()
 
     async def _async_update_data(self):
