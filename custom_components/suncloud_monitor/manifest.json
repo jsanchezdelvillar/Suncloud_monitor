@@ -2,12 +2,12 @@
   "domain": "suncloud_monitor",
   "name": "SunCloud Monitor",
   "version": "1.0.0",
-  "documentation": "https://github.com/Suncloud_monitor",
-  "issue_tracker": "https://github.com/Suncloud_monitor/issues",
+  "documentation": "https://github.com/jsanchezdelvillar/Suncloud_monitor",
+  "issue_tracker": "https://github.com/jsanchezdelvillar/Suncloud_monitor/issues",
   "requirements": ["cryptography", "pyyaml"],
   "dependencies": [],
-  "codeowners": ["@your-github-username"],
+  "codeowners": ["@jsanchezdelvillar"],
   "config_flow": true,
-  "iot_class": "cloud_polling"
+  "iot_class": "cloud_polling",
   "icon": "icon.svg"
 }
