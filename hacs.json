@@ -1,0 +1,6 @@
+{
+  "name": "SunCloud Monitor",
+  "content_in_root": false,
+  "filename": "custom_components/suncloud_monitor/__init__.py",
+  "render_readme": true
+}
