@@ -56,6 +56,7 @@ jobs:
       - name: Hassfest validation (custom integration)
         run: |
           git clone --depth=1 --branch 2024.5.3 https://github.com/home-assistant/core.git ../core
+          mkdir -p ../core/custom_components
           cp -r ./custom_components/suncloud_monitor ../core/custom_components/suncloud_monitor
           cd ../core
           python3 -m script.hassfest --action validate --integration-path custom_components/suncloud_monitor
