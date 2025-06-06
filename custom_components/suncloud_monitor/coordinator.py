@@ -244,7 +244,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[SN] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
-            self.sn = result_data.get("pageList", [{}])[0].get("sn")
+            self.sn = result_data.get("pageList", [{}])[0].get("device_sn")
 
     async def _fetch_ps_key(self):
         url = "https://gateway.isolarcloud.eu/openapi/getPowerStationDetail"
