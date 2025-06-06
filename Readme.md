@@ -41,7 +41,7 @@
 ### ✅ Recommended: via HACS
 
 1. Add repository to HACS:
-   - URL: `https://github.com/YOUR_USERNAME/Suncloud_monitor`
+   - URL: `https://github.com/jsanchezdelvillar/Suncloud_monitor`
    - Category: Integration
 2. Install and restart Home Assistant.
 3. Go to **Settings > Devices & Services > Add Integration**
