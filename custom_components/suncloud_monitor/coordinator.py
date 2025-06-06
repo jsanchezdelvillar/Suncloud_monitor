@@ -250,7 +250,8 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             for device in page_list:
                 comm_sn = device.get("communication_dev_sn")
                 # Make sure it's not null and device type is 'Communication module'
-                if comm_sn and device.get("type_name", "").lower() == "communication module":
+                type_name = device.get("type_name", "").lower()
+                if comm_sn and type_name == "communication module":
                     break
             self.sn = comm_sn
 
@@ -275,10 +276,15 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             self.ps_key = result_data.get("ps_key")
 
     async def _fetch_points(self):
-        url = "https://gateway.isolarcloud.eu/openapi/getTelemetryPointList"
+        url = "https://gateway.isolarcloud.eu/openapi/getOpenPointInfo"
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
-        payload = {"ps_id": self.ps_id}
+        payload = {
+            "device_type": 11,
+            "type": 2,
+            "curPage": 1,
+            "size": 999
+        }
         encrypted_payload = self._build_encrypted_payload(
             payload, self.token, unenc_key
         )
