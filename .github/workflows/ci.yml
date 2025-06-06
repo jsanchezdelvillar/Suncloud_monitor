@@ -35,6 +35,7 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio flake8 black mypy hacs
           pip install tqdm
           pip install aiohttp_session
+          pip install ruff
 
       - name: Lint with flake8
         run: |
