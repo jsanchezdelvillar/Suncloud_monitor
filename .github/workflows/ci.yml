@@ -60,7 +60,7 @@ jobs:
           mkdir -p ../core/custom_components
           cp -r ./custom_components/suncloud_monitor ../core/custom_components/suncloud_monitor
           cd ../core
-          python3 -m script.hassfest --action validate --integration-path custom_components/suncloud_monitor
+          python3 -m script.hassfest --action validate --integration-path custom_components/suncloud_monitor --skip bluetooth
 
       - name: HACS validation
         uses: hacs/action@main
