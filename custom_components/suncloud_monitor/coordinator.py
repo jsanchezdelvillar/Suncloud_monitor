@@ -247,10 +247,10 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             self.sn = result_data.get("pageList", [{}])[0].get("sn")
 
     async def _fetch_ps_key(self):
-        url = "https://gateway.isolarcloud.eu/openapi/getPowerStationKey"
+        url = "https://gateway.isolarcloud.eu/openapi/getPowerStationDetail"
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
-        payload = {"ps_id": self.ps_id}
+        payload = {"sn": self.sn, "is_get_ps_remarks": "1"}
         encrypted_payload = self._build_encrypted_payload(
             payload, self.token, unenc_key
         )
