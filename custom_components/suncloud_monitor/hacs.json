@@ -1,9 +1,8 @@
 {
   "name": "SunCloud Monitor",
   "content_in_root": false,
-  "filename": "custom_components/suncloud_monitor/manifest.json",
+  "filename": "custom_components/suncloud_monitor/__init__.py",
   "domains": ["suncloud_monitor"],
-  "country": "EU",
-  "homeassistant": "2023.0.0",
+  "min_version": "2023.0.0",
   "render_readme": true
 }
