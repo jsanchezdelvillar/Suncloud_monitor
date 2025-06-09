@@ -9,7 +9,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entities = []
 
     for point_id, meta in coordinator.points.items():
-        # Compose the sensor name as "point-id - point_name" or fallback to just point_id
+        # Sensor name as "point-id - point_name" or fallback to just point_id
         if meta.get("point_name"):
             sensor_name = f"{point_id} - {meta.get('point_name')}"
         else:
