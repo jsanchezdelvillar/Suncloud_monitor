@@ -72,18 +72,30 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         points = await load_points_from_yaml(self.hass)
         all_point_ids = sorted(points.keys())
-        default_selected = self._entry.options.get(CONF_POINTS, all_point_ids)
+
+        # Filter default_selected to only valid current points
+        default_selected = [
+            pid for pid in self._entry.options.get(CONF_POINTS, all_point_ids)
+            if pid in all_point_ids
+        ]
 
         if user_input is not None and user_input.get("repopulate"):
             return await self.async_step_repopulate()
 
         if user_input is not None and CONF_POINTS in user_input:
-            selected_points = {pid: points[pid] for pid in user_input[CONF_POINTS]}
+            # Only save points that still exist
+            selected_points = {pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points}
             await save_points_to_yaml(self.hass, selected_points)
             await self.hass.config_entries.async_reload(self._entry.entry_id)
             return self.async_create_entry(
                 title="", data={CONF_POINTS: user_input[CONF_POINTS]}
             )
+
+        # Optionally: show friendly names in the selector
+        options = [
+            {"value": pid, "label": f"{pid} - {points[pid].get('name', '')}"}
+            for pid in all_point_ids
+        ]
 
         return self.async_show_form(
             step_id="init",
@@ -91,7 +103,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
                 {
                     vol.Optional(CONF_POINTS, default=default_selected): SelectSelector(
                         SelectSelectorConfig(
-                            options=all_point_ids,
+                            options=options,
                             multiple=True,
                             translation_key="point_selector",
                         )
