@@ -9,10 +9,15 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entities = []
 
     for point_id, meta in coordinator.points.items():
+        # Compose the sensor name as "point-id - point_name" or fallback to just point_id
+        if meta.get("name"):
+            sensor_name = f"{point_id} - {meta.get('name')}"
+        else:
+            sensor_name = point_id
         sensor = SuncloudSensor(
             coordinator=coordinator,
             point_id=point_id,
-            name=meta.get("name", f"Point {point_id}"),
+            name=sensor_name,
             unit=meta.get("unit", ""),
         )
         entities.append(sensor)
