@@ -73,7 +73,16 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         points = await load_points_from_yaml(self.hass)
         all_point_ids = sorted(points.keys())
 
-        # Filter default_selected to only valid current points
+        # Always show all available points as options
+        options = [
+            {
+                "value": pid,
+                "label": f"{pid} - {points[pid].get('name','')}".strip() if points[pid].get('name') else pid
+            }
+            for pid in all_point_ids
+        ]
+
+        # Filter default_selected so it only contains currently available points
         default_selected = [
             pid for pid in self._entry.options.get(CONF_POINTS, all_point_ids)
             if pid in all_point_ids
@@ -90,12 +99,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(
                 title="", data={CONF_POINTS: user_input[CONF_POINTS]}
             )
-
-        # Optionally: show friendly names in the selector
-        options = [
-            {"value": pid, "label": f"{pid} - {points[pid].get('name', '')}"}
-            for pid in all_point_ids
-        ]
 
         return self.async_show_form(
             step_id="init",
