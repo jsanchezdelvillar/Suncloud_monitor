@@ -1,7 +1,8 @@
 import voluptuous as vol
-import yaml
-import aiofiles
+import yaml  # type: ignore
+import aiofiles  # type: ignore
 from pathlib import Path
+from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -10,7 +11,7 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 from .const import DOMAIN, CONF_POINTS
 
 
-async def load_points_from_yaml(hass):
+async def load_points_from_yaml(hass) -> dict[str, Any]:
     path = Path(
         hass.config.path("custom_components/suncloud_monitor/config_storage.yaml")
     )
@@ -25,7 +26,7 @@ async def load_points_from_yaml(hass):
     return {}
 
 
-async def save_points_to_yaml(hass, selected_points):
+async def save_points_to_yaml(hass, selected_points: dict[str, Any]) -> None:
     """Save the filtered points list to config_storage.yaml, preserving other fields."""
     path = Path(
         hass.config.path("custom_components/suncloud_monitor/config_storage.yaml")
@@ -105,7 +106,9 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
             # Only save points that still exist
 
             selected_points = {
-                pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points
+                pid: points[pid]
+                for pid in user_input[CONF_POINTS]
+                if pid in points
             }
             await save_points_to_yaml(self.hass, selected_points)
             await self.hass.config_entries.async_reload(self._entry.entry_id)
