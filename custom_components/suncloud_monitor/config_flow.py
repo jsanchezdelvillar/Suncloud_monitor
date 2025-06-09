@@ -100,7 +100,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None and CONF_POINTS in user_input:
             # Only save points that still exist
-            selected_points = {pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points}
             selected_points = {
                 pid: points[pid]
                 for pid in user_input[CONF_POINTS]
