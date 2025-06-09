@@ -21,7 +21,6 @@ class DummyConfig:
         self.config_dir = "/tmp"  # or any directory you want to use for testing
 
     def path(self, filename):
-        # You can keep this as returning just the filename, but for more realistic behavior:
         return f"{self.config_dir}/{filename}"
 
 
