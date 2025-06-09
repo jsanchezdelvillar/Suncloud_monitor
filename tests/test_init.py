@@ -18,7 +18,7 @@ class DummyConfigEntries:
 
 class DummyConfig:
     def __init__(self):
-        self.config_dir = "/tmp"  # or any directory you want to use for testing
+        self.config_dir = "/tmp"
 
     def path(self, filename):
         return f"{self.config_dir}/{filename}"
