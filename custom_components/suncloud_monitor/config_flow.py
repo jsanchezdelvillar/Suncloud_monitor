@@ -9,6 +9,7 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 
 from .const import DOMAIN, CONF_POINTS
 
+
 async def load_points_from_yaml(hass):
     path = Path(
         hass.config.path("custom_components/suncloud_monitor/config_storage.yaml")
@@ -22,6 +23,7 @@ async def load_points_from_yaml(hass):
         except Exception:
             return {}
     return {}
+
 
 async def save_points_to_yaml(hass, selected_points):
     """Save the filtered points list to config_storage.yaml, preserving other fields."""
@@ -39,6 +41,7 @@ async def save_points_to_yaml(hass, selected_points):
     data["points"] = selected_points
     async with aiofiles.open(path, "w") as f:
         await f.write(yaml.dump(data))
+
 
 class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -64,6 +67,7 @@ class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry):
         return SuncloudOptionsFlow(config_entry)
 
+
 class SuncloudOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, entry):
         super().__init__()
@@ -77,7 +81,10 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         options = [
             {
                 "value": pid,
-                "label": f"{pid} - {points[pid]['point_name']}" if points[pid].get('point_name') else pid
+                "label": (
+                    f"{pid} - {points[pid]['point_name']}"
+                    if points[pid].get('point_name') else pid
+                ),
             }
             for pid in all_point_ids
         ]
@@ -115,6 +122,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
                 }
             ),
         )
+
 
     async def async_step_repopulate(self, user_input=None):
         coordinator = self.hass.data[DOMAIN][self._entry.entry_id]
