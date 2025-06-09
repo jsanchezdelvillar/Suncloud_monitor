@@ -34,9 +34,17 @@ class DummyHass:
         self.bus = DummyBus()
         self.states = {}
         self.services = DummyServices()
+        self.config = self.DummyConfig()
 
     def async_create_task(self, coro):
         pass
+
+    class DummyConfig:
+        def path(self, file_name):
+            # Simulate Home Assistant config directory path
+            from pathlib import Path
+
+            return str(Path("/tmp/homeassistant") / file_name)
 
 
 class DummyConfigEntries:
