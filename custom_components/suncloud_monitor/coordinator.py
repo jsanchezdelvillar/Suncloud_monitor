@@ -247,9 +247,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             page_list = result_data.get("pageList", [])
             comm_sn = None
             # Find the communication module and use its communication_dev_sn
+
             for device in page_list:
                 comm_sn = device.get("communication_dev_sn")
                 # Make sure it's not null and device type is 'Communication module'
+
                 type_name = device.get("type_name", "").lower()
                 if comm_sn and type_name == "communication module":
                     break
@@ -279,12 +281,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         url = "https://gateway.isolarcloud.eu/openapi/getOpenPointInfo"
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
-        payload = {
-            "device_type": 11,
-            "type": 2,
-            "curPage": 1,
-            "size": 999
-        }
+        payload = {"device_type": 11, "type": 2, "curPage": 1, "size": 999}
         encrypted_payload = self._build_encrypted_payload(
             payload, self.token, unenc_key
         )
@@ -363,6 +360,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         await self.async_close()
 
     # ----------------- ADDED: Remove orphaned sensors -----------------
+
     async def remove_orphaned_sensors(self):
         """
         Remove sensors that do not belong to the current points list.
@@ -372,6 +370,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         from homeassistant.helpers.entity_registry import (
             async_get as async_get_entity_registry,
         )
+
         entity_registry = async_get_entity_registry(self.hass)
         current_point_ids = set(self.points.keys())
         entity_prefix = "sensor.suncloud_"
