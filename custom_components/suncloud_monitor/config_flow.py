@@ -77,7 +77,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         options = [
             {
                 "value": pid,
-                "label": f"{pid} - {points[pid]['name']}" if points[pid].get('name') else pid
+                "label": f"{pid} - {points[pid]['point_name']}" if points[pid].get('point_name') else pid
             }
             for pid in all_point_ids
         ]
