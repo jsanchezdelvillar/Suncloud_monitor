@@ -6,13 +6,15 @@ import string
 import time
 from pathlib import Path
 from datetime import timedelta
+from typing import Any
 
 import aiohttp
-import yaml
-import aiofiles
+import yaml  # type: ignore
+import aiofiles  # type: ignore
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding as rsa_padding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.backends import default_backend
@@ -36,19 +38,19 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def generate_random_key(length=16):
+def generate_random_key(length: int = 16) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-def generate_nonce(length=32):
+def generate_nonce(length: int = 32) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, config: dict):
+    def __init__(self, hass: HomeAssistant, config: dict[Any, Any]):
         self.hass = hass
         self.config = config
-        self.points = {}
+        self.points: dict[str, dict[str, Any]] = {}
         self.token = None
         self.ps_id = None
         self.sn = None
@@ -101,6 +103,8 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             pubkey = serialization.load_der_public_key(
                 pubkey_bytes, backend=default_backend()
             )
+            if not isinstance(pubkey, RSAPublicKey):
+                raise TypeError("Public key is not an RSA public key")
             encrypted = pubkey.encrypt(secret.encode(), rsa_padding.PKCS1v15())
             return base64.urlsafe_b64encode(encrypted).decode()
         except Exception as e:
