@@ -25,8 +25,11 @@ class DummyConfig:
 
 
 class DummyBus:
-    async def async_listen_once(self, event, callback):
-        pass  # Do nothing for the test
+    def async_listen(self, event_type, listener):
+        pass
+
+    async def async_listen_once(self, event_type, listener):
+        return  # or await a dummy future if needed
 
 
 class DummyHass:
