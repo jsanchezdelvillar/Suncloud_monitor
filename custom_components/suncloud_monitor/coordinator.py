@@ -298,7 +298,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[POINTS] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
-            
+
             if isinstance(result_data, dict):
                 points_list = result_data.get("pageList", [])
             elif isinstance(result_data, list):
@@ -368,9 +368,10 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         Remove sensors that do not belong to the current points list.
         Must be called after points list is updated.
         """
-        
-        from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
+        from homeassistant.helpers.entity_registry import (
+            async_get as async_get_entity_registry,
+        )
         entity_registry = async_get_entity_registry(self.hass)
         current_point_ids = set(self.points.keys())
         entity_prefix = "sensor.suncloud_"
