@@ -35,11 +35,14 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def generate_random_key(length=16):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
+
 def generate_nonce(length=32):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
+
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config: dict):
@@ -295,13 +298,17 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             decrypted = self._aes_decrypt(raw, unenc_key)
             _LOGGER.debug("[POINTS] 🔓 %s", json.dumps(decrypted, indent=2))
             result_data = decrypted.get("result_data")
+            
             if isinstance(result_data, dict):
                 points_list = result_data.get("pageList", [])
             elif isinstance(result_data, list):
                 points_list = result_data
             else:
                 points_list = []
-            self.points = {str(point.get("id", point.get("point_id"))): point for point in points_list}
+            self.points = {
+                str(point.get("id", point.get("point_id"))): point
+                for point in points_list
+            }
             await self._save_config_storage()
 
     async def _async_update_data(self):
@@ -361,6 +368,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         Remove sensors that do not belong to the current points list.
         Must be called after points list is updated.
         """
+        
         from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
         entity_registry = async_get_entity_registry(self.hass)
