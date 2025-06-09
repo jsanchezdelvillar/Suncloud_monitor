@@ -78,39 +78,40 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         all_point_ids = sorted(points.keys())
 
         # Always show all available points as options, format: point-id - point_name
+
         options = [
             {
                 "value": pid,
                 "label": (
                     f"{pid} - {points[pid]['point_name']}"
-                    if points[pid].get('point_name') else pid
+                    if points[pid].get("point_name")
+                    else pid
                 ),
             }
             for pid in all_point_ids
         ]
 
         # Filter default_selected so it only contains currently available points
+
         default_selected = [
-            pid for pid in self._entry.options.get(CONF_POINTS, all_point_ids)
+            pid
+            for pid in self._entry.options.get(CONF_POINTS, all_point_ids)
             if pid in all_point_ids
         ]
 
         if user_input is not None and user_input.get("repopulate"):
             return await self.async_step_repopulate()
-
         if user_input is not None and CONF_POINTS in user_input:
             # Only save points that still exist
+
             selected_points = {
-                pid: points[pid]
-                for pid in user_input[CONF_POINTS]
-                if pid in points
+                pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points
             }
             await save_points_to_yaml(self.hass, selected_points)
             await self.hass.config_entries.async_reload(self._entry.entry_id)
             return self.async_create_entry(
                 title="", data={CONF_POINTS: user_input[CONF_POINTS]}
             )
-
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -130,6 +131,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
     async def async_step_repopulate(self, user_input=None):
         coordinator = self.hass.data[DOMAIN][self._entry.entry_id]
         # Only fetch new points using the cached credentials/info
+
         await coordinator._fetch_points()
         await self.hass.config_entries.async_reload(self._entry.entry_id)
         return await self.async_step_init()
