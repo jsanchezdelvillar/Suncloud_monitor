@@ -35,14 +35,11 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
 def generate_random_key(length=16):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
-
 def generate_nonce(length=32):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
-
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config: dict):
@@ -357,3 +354,23 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
     @callback
     async def _on_shutdown(self, _event):
         await self.async_close()
+
+    # ----------------- ADDED: Remove orphaned sensors -----------------
+    async def remove_orphaned_sensors(self):
+        """
+        Remove sensors that do not belong to the current points list.
+        Must be called after points list is updated.
+        """
+        from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+
+        entity_registry = async_get_entity_registry(self.hass)
+        current_point_ids = set(self.points.keys())
+        entity_prefix = "sensor.suncloud_"
+
+        for entity in list(entity_registry.entities.values()):
+            if (
+                entity.platform == "suncloud_monitor"
+                and entity.entity_id.startswith(entity_prefix)
+                and entity.unique_id.replace("suncloud_", "") not in current_point_ids
+            ):
+                entity_registry.async_remove(entity.entity_id)
