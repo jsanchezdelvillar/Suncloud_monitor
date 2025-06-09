@@ -73,11 +73,11 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         points = await load_points_from_yaml(self.hass)
         all_point_ids = sorted(points.keys())
 
-        # Always show all available points as options
+        # Always show all available points as options, format: point-id - point_name
         options = [
             {
                 "value": pid,
-                "label": f"{pid} - {points[pid].get('name','')}".strip() if points[pid].get('name') else pid
+                "label": f"{pid} - {points[pid]['name']}" if points[pid].get('name') else pid
             }
             for pid in all_point_ids
         ]
