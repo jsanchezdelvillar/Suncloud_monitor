@@ -106,9 +106,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
             # Only save points that still exist
 
             selected_points = {
-                pid: points[pid]
-                for pid in user_input[CONF_POINTS]
-                if pid in points
+                pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points
             }
             await save_points_to_yaml(self.hass, selected_points)
             await self.hass.config_entries.async_reload(self._entry.entry_id)
