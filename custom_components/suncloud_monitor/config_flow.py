@@ -101,6 +101,11 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None and CONF_POINTS in user_input:
             # Only save points that still exist
             selected_points = {pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points}
+            selected_points = {
+                pid: points[pid]
+                for pid in user_input[CONF_POINTS]
+                if pid in points
+            }
             await save_points_to_yaml(self.hass, selected_points)
             await self.hass.config_entries.async_reload(self._entry.entry_id)
             return self.async_create_entry(
@@ -122,7 +127,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
                 }
             ),
         )
-
 
     async def async_step_repopulate(self, user_input=None):
         coordinator = self.hass.data[DOMAIN][self._entry.entry_id]
