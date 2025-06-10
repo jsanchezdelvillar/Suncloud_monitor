@@ -376,6 +376,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         from homeassistant.helpers.entity_registry import (
             async_get as async_get_entity_registry,
         )
+
         entity_registry = async_get_entity_registry(self.hass)
         current_point_ids = set(self._points.keys())
         entity_prefix = "sensor.suncloud_"
