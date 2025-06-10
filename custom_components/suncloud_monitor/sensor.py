@@ -1,53 +1,59 @@
+"""Sensor platform for Suncloud Monitor."""
+
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import DOMAIN
+from .coordinator import SuncloudDataCoordinator
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    entities = []
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up sensors from config entry."""
+    coordinator: SuncloudDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    for point_id, meta in coordinator.points.items():
-        # Sensor name as "point-id - point_name" or fallback to just point_id
-        if meta.get("point_name"):
-            sensor_name = f"{point_id} - {meta.get('point_name')}"
-        else:
-            sensor_name = point_id
-        sensor = SuncloudSensor(
-            coordinator=coordinator,
-            point_id=point_id,
-            name=sensor_name,
-            unit=meta.get("storage_unit", ""),
-        )
-        entities.append(sensor)
-    async_add_entities(entities, True)
+    sensors = []
+    for point_id in coordinator.points:
+        sensors.append(SuncloudSensor(coordinator, point_id))
+
+    async_add_entities(sensors)
 
 
-class SuncloudSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, coordinator, point_id, name, unit):
-        super().__init__(coordinator)
-        self._attr_unique_id = f"suncloud_{point_id}"
-        self._attr_name = name
-        self._attr_native_unit_of_measurement = unit
-        self._attr_device_class = None
-        self._attr_state_class = "measurement"
-        self._point_id = point_id
+class SuncloudSensor(SensorEntity):
+    def __init__(self, coordinator: SuncloudDataCoordinator, point_id: str) -> None:
+        self.coordinator = coordinator
+        self._point_id = str(point_id)
+
+    @property
+    def name(self) -> str:
+        config = self.coordinator.get_point_config(self._point_id)
+        name = config.get("name") if config else None
+        return f"{self._point_id} - {name}" if name else self._point_id
+
+    @property
+    def unique_id(self) -> str:
+        return f"suncloud_sensor_{self._point_id}"
 
     @property
     def native_value(self):
-        data = self.coordinator.data or {}
-        return data.get(self._point_id)
+        return self.coordinator.data.get(self._point_id)
+
+    @property
+    def native_unit_of_measurement(self) -> str | None:
+        config = self.coordinator.get_point_config(self._point_id)
+        return config.get("unit") if config else None
+
+    @property
+    def should_poll(self) -> bool:
+        return False
+
+    @property
+    def entity_category(self) -> EntityCategory | None:
+        return None
 
     @property
     def device_info(self):
-        ps_id = getattr(self.coordinator, "ps_id", None)
-        if not ps_id:
-            ps_id = "unknown_plant"
         return {
-            "identifiers": {(DOMAIN, str(ps_id))},
-            "name": f"SunCloud Plant {ps_id}",
-            "manufacturer": "Sungrow",
-            "model": "SunCloud Monitor",
-            "sw_version": "1.0.0",
+            "identifiers": {(DOMAIN, "suncloud_device")},
+            "name": "Suncloud Monitor",
+            "manufacturer": "Suncloud",
         }
