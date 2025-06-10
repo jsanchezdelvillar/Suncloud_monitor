@@ -219,7 +219,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"curPage": 1, "size": 1}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload,
+            self.token,
+            unenc_key,
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -237,7 +241,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"curPage": 1, "size": 50, "ps_id": self.ps_id}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload,
+            self.token,
+            unenc_key,
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -262,7 +270,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"sn": self.sn, "is_get_ps_remarks": "1"}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload,
+            self.token,
+            unenc_key,
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -280,7 +292,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         unenc_key = generate_random_key()
         encrypted_key = self._rsa_encrypt(unenc_key, self.config[CONF_RSA_KEY])
         payload = {"device_type": 11, "type": 2, "curPage": 1, "size": 999}
-        encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+        encrypted_payload = self._build_encrypted_payload(
+            payload,
+            self.token,
+            unenc_key,
+        )
         async with self.session.post(
             url,
             headers=self._build_headers(encrypted_key, self.token),
@@ -315,7 +331,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
                 "point_id_list": point_ids,
                 "ps_key_list": [self.ps_key],
             }
-            encrypted_payload = self._build_encrypted_payload(payload, self.token, unenc_key)
+            encrypted_payload = self._build_encrypted_payload(
+                payload,
+                self.token,
+                unenc_key,
+            )
             async with self.session.post(
                 url,
                 headers=self._build_headers(encrypted_key, self.token),
