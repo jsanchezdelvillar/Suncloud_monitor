@@ -41,7 +41,7 @@ def test_device_info_with_ps_id():
     )
     info = sensor.device_info
     assert info["identifiers"] == {("suncloud_monitor", "plant123")}
-    assert "SunCloud Plant" in info["name"]
+    assert info["name"] == "Sungrow plant123"
 
 
 def test_device_info_without_ps_id():
@@ -51,4 +51,4 @@ def test_device_info_without_ps_id():
     )
     info = sensor.device_info
     assert info["identifiers"] == {("suncloud_monitor", "unknown_plant")}
-    assert "SunCloud Plant" in info["name"]
+    assert info["name"] == "Sungrow unknown_plant"
