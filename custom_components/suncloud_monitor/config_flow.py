@@ -1,3 +1,5 @@
+"""Config flow for Suncloud Monitor integration."""
+
 import voluptuous as vol
 import yaml  # type: ignore
 import aiofiles  # type: ignore
@@ -78,8 +80,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         points = await load_points_from_yaml(self.hass)
         all_point_ids = sorted(points.keys())
 
-        # Always show all available points as options, format: point-id - point_name
-
         options = [
             {
                 "value": pid,
@@ -92,8 +92,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
             for pid in all_point_ids
         ]
 
-        # Filter default_selected so it only contains currently available points
-
         default_selected = [
             pid
             for pid in self._entry.options.get(CONF_POINTS, all_point_ids)
@@ -103,8 +101,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None and user_input.get("repopulate"):
             return await self.async_step_repopulate()
         if user_input is not None and CONF_POINTS in user_input:
-            # Only save points that still exist
-
             selected_points = {
                 pid: points[pid] for pid in user_input[CONF_POINTS] if pid in points
             }
@@ -131,8 +127,6 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_repopulate(self, user_input=None):
         coordinator = self.hass.data[DOMAIN][self._entry.entry_id]
-        # Only fetch new points using the cached credentials/info
-
         await coordinator._fetch_points()
         await self.hass.config_entries.async_reload(self._entry.entry_id)
         return await self.async_step_init()
