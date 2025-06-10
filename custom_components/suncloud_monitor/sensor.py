@@ -46,6 +46,7 @@ class SuncloudSensor(SensorEntity):
         self._point_id = str(point_id)
         self._name = name
         self._unit = unit
+        self._attr_unique_id = f"suncloud_{self._point_id}"
 
     @property
     def name(self) -> str:
@@ -61,7 +62,9 @@ class SuncloudSensor(SensorEntity):
 
     @property
     def native_value(self):
-        return self.coordinator.data.get(self._point_id)
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data.get(self._point_id)
 
     @property
     def native_unit_of_measurement(self) -> str | None:
@@ -80,8 +83,10 @@ class SuncloudSensor(SensorEntity):
 
     @property
     def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, "suncloud_device")},
-            "name": "Suncloud Monitor",
-            "manufacturer": "Suncloud",
-        }
+        ps_id = self.coordinator.ps_id or "unknown_plant"
+        return {
+            "identifiers": {("suncloud_monitor", ps_id)},
+            "name": f"Sungrow {ps_id}",
+            "manufacturer": "Sungrow",
+            "model": "Monitor",
+        }
