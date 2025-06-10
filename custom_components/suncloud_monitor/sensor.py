@@ -22,7 +22,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         points = coordinator.points
 
     sensors = [
-        SuncloudSensor(coordinator, point_id, config.get("point_name"), config.get("unit"))
+        SuncloudSensor(
+            coordinator,
+            point_id,
+            config.get("point_name"),
+            config.get("unit"),
+        )
         for point_id, config in points.items()
     ]
 
@@ -30,7 +35,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 
 class SuncloudSensor(SensorEntity):
-    def __init__(self, coordinator: SuncloudDataCoordinator, point_id: str, name: str = None, unit: str = None) -> None:
+    def __init__(
+        self,
+        coordinator: SuncloudDataCoordinator,
+        point_id: str,
+        name: str = None,
+        unit: str = None,
+    ) -> None:
         self.coordinator = coordinator
         self._point_id = str(point_id)
         self._name = name
