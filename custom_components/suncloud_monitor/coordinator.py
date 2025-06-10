@@ -57,11 +57,11 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         self.ps_key = None
         self._session = None
         self.storage_path = Path(hass.config.path(CONFIG_STORAGE_FILE))
+        poll_seconds = config_entry.options.get("poll_interval", 300),
         super().__init__(
             hass,
             _LOGGER,
             name="SunCloud Monitor",
-            poll_seconds = config_entry.options.get("poll_interval", 300)
             update_interval=timedelta(seconds=poll_seconds),
         )
         hass.bus.async_listen_once("homeassistant_stop", self._on_shutdown)
