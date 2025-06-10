@@ -47,6 +47,7 @@ class SuncloudSensor(SensorEntity):
         self._name = name
         self._unit = unit
         self._attr_unique_id = f"suncloud_{self._point_id}"
+        self._attr_name = name
 
     @property
     def name(self) -> str:
