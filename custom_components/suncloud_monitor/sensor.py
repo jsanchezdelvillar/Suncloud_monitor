@@ -11,23 +11,35 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up sensors from config entry."""
     coordinator: SuncloudDataCoordinator = hass.data[DOMAIN][config_entry.entry_id]
 
-    selected = config_entry.options.get(CONF_POINTS)
-    if selected:
-        point_ids = [pid for pid in coordinator.points if pid in selected]
+    selected_points = config_entry.options.get(CONF_POINTS)
+    if selected_points:
+        points = {
+            pid: config
+            for pid, config in coordinator.points.items()
+            if pid in selected_points
+        }
     else:
-        point_ids = list(coordinator.points.keys())
+        points = coordinator.points
 
-    sensors = [SuncloudSensor(coordinator, pid) for pid in point_ids]
+    sensors = [
+        SuncloudSensor(coordinator, point_id, config.get("point_name"), config.get("unit"))
+        for point_id, config in points.items()
+    ]
+
     async_add_entities(sensors)
 
 
 class SuncloudSensor(SensorEntity):
-    def __init__(self, coordinator: SuncloudDataCoordinator, point_id: str) -> None:
+    def __init__(self, coordinator: SuncloudDataCoordinator, point_id: str, name: str = None, unit: str = None) -> None:
         self.coordinator = coordinator
         self._point_id = str(point_id)
+        self._name = name
+        self._unit = unit
 
     @property
     def name(self) -> str:
+        if self._name:
+            return f"{self._point_id} - {self._name}"
         config = self.coordinator.get_point_config(self._point_id)
         name = config.get("point_name") if config else None
         return f"{self._point_id} - {name}" if name else self._point_id
@@ -42,6 +54,8 @@ class SuncloudSensor(SensorEntity):
 
     @property
     def native_unit_of_measurement(self) -> str | None:
+        if self._unit:
+            return self._unit
         config = self.coordinator.get_point_config(self._point_id)
         return config.get("unit") if config else None
 
