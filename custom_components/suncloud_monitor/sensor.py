@@ -83,10 +83,10 @@ class SuncloudSensor(SensorEntity):
 
     @property
     def device_info(self):
-        ps_id = self.coordinator.ps_id or "unknown_plant"
-        return {
-            "identifiers": {("suncloud_monitor", ps_id)},
-            "name": f"Sungrow {ps_id}",
-            "manufacturer": "Sungrow",
-            "model": "Monitor",
-        }
+        ps_id = self.coordinator.ps_id or "unknown_plant"
+        return {
+            "identifiers": {("suncloud_monitor", ps_id)},
+            "name": f"Sungrow {ps_id}",
+            "manufacturer": "Sungrow",
+            "model": "Monitor",
+        }
