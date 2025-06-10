@@ -8,7 +8,12 @@ from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    TextSelector,
+    TextSelectorConfig,
+)
 
 from .const import DOMAIN, CONF_POINTS
 
@@ -57,10 +62,16 @@ class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required("username"): str,
-                    vol.Required("password"): str,
+                    vol.Required("password"): TextSelector(
+                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                    ),
                     vol.Required("appkey"): str,
-                    vol.Required("access_key"): str,
-                    vol.Required("rsa_key"): str,
+                    vol.Required("access_key"): TextSelector(
+                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                    ),
+                    vol.Required("rsa_key"): TextSelector(
+                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                    ),
                 }
             ),
         )
@@ -120,6 +131,10 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
                             translation_key="point_selector",
                         )
                     ),
+                    vol.Optional(
+                        "poll_interval",
+                        default=self._entry.options.get("poll_interval", 300)
+                    ): int,
                     vol.Optional("repopulate", default=False): bool,
                 }
             ),
