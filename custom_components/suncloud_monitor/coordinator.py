@@ -61,7 +61,8 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="SunCloud Monitor",
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            poll_seconds = config_entry.options.get("poll_interval", 300)
+            update_interval=timedelta(seconds=poll_seconds),
         )
         hass.bus.async_listen_once("homeassistant_stop", self._on_shutdown)
 
