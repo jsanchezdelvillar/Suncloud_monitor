@@ -64,7 +64,7 @@ class SuncloudSensor(SensorEntity):
     def native_value(self):
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(self._point_id)
+        return self.coordinator.data.get(self._point_id)
 
     @property
     def native_unit_of_measurement(self) -> str | None:
