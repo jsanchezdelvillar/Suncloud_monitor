@@ -63,14 +63,26 @@ class SuncloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required("username"): str,
                     vol.Required("password"): TextSelector(
-                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                        TextSelectorConfig(
+                            type="text",
+                            autocomplete="off",
+                            mode="password",
+                        )
                     ),
                     vol.Required("appkey"): str,
                     vol.Required("access_key"): TextSelector(
-                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                        TextSelectorConfig(
+                            type="text",
+                            autocomplete="off",
+                            mode="password",
+                        )
                     ),
                     vol.Required("rsa_key"): TextSelector(
-                        TextSelectorConfig(type="text", autocomplete="off", mode="password")
+                        TextSelectorConfig(
+                            type="text",
+                            autocomplete="off",
+                            mode="password",
+                        )
                     ),
                 }
             ),
