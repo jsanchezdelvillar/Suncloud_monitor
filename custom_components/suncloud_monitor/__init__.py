@@ -11,7 +11,7 @@ PLATFORMS: list[str] = ["sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Suncloud Monitor from a config entry."""
-    coordinator = SuncloudDataCoordinator(hass, dict(entry.data))
+    coordinator = SuncloudDataCoordinator(hass, entry)
     await coordinator._load_config_storage()  # ✅ nombre correcto del método
     await coordinator.async_config_entry_first_refresh()
 
