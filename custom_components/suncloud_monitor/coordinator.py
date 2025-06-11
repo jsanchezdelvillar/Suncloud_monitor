@@ -27,7 +27,6 @@ from homeassistant.helpers.update_coordinator import (
 
 from .const import (
     CONFIG_STORAGE_FILE,
-    DEFAULT_SCAN_INTERVAL,
     CONF_ACCESS_KEY,
     CONF_APPKEY,
     CONF_USERNAME,
@@ -57,7 +56,7 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         self.ps_key = None
         self._session = None
         self.storage_path = Path(hass.config.path(CONFIG_STORAGE_FILE))
-        poll_seconds = config_entry.options.get("poll_interval", 300),
+        poll_seconds = config_entry.options.get("poll_interval", 300)
         super().__init__(
             hass,
             _LOGGER,
