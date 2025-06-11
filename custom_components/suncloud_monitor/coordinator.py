@@ -46,27 +46,27 @@ def generate_nonce(length: int = 32) -> str:
 
 
 class SuncloudDataCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, config_entry: config_entries.ConfigEntry):
-        self.hass = hass
-        self.config_entry = config_entry
-        self._points: dict[str, dict[str, Any]] = {}
-        self.token = None
-        self.ps_id = None
-        self.sn = None
-        self.ps_key = None
-        self._session = None
-        self.storage_path = Path(hass.config.path(CONFIG_STORAGE_FILE))
+    def __init__(self, hass: HomeAssistant, config_entry: config_entries.ConfigEntry):
+        self.hass = hass
+        self.config_entry = config_entry
+        self._points: dict[str, dict[str, Any]] = {}
+        self.token = None
+        self.ps_id = None
+        self.sn = None
+        self.ps_key = None
+        self._session = None
+        self.storage_path = Path(hass.config.path(CONFIG_STORAGE_FILE))
 
-        poll_seconds = config_entry.options.get("poll_interval", 300)
+        poll_seconds = config_entry.options.get("poll_interval", 300)
 
-        super().__init__(
-            hass,
-            _LOGGER,
-            name="SunCloud Monitor",
-            update_interval=timedelta(seconds=poll_seconds),
-        )
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="SunCloud Monitor",
+            update_interval=timedelta(seconds=poll_seconds),
+        )
 
-        hass.bus.async_listen_once("homeassistant_stop", self._on_shutdown)
+        hass.bus.async_listen_once("homeassistant_stop", self._on_shutdown)
 
     @property
     def session(self):
