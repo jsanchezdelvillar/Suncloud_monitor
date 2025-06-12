@@ -19,6 +19,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.backends import default_backend
 
+
+from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
