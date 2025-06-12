@@ -19,7 +19,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from cryptography.hazmat.backends import default_backend
 
-from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
@@ -49,6 +48,8 @@ def generate_nonce(length: int = 32) -> str:
 class SuncloudDataCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry: config_entries.ConfigEntry):
         self.hass = hass
+        self.config_entry = config_entry
+        self.config = config_entry.data
         self.config_entry = config_entry
         self._points: dict[str, dict[str, Any]] = {}
         self.token = None
