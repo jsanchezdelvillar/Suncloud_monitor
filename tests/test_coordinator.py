@@ -2,6 +2,7 @@ from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinat
 from unittest.mock import MagicMock
 import json
 
+
 class DummyHass:
     class config:
         @staticmethod
@@ -13,11 +14,13 @@ class DummyHass:
         def async_listen_once(event, callback):
             pass
 
+
 def make_mock_entry(data=None, options=None):
     mock_entry = MagicMock()
     mock_entry.data = data or {}
     mock_entry.options = options or {}
     return mock_entry
+
 
 def test_coordinator_initializes():
     hass = DummyHass()
@@ -27,10 +30,12 @@ def test_coordinator_initializes():
     assert coordinator.config_entry == entry
     assert coordinator.points == {}
 
+
 def test_rsa_encrypt_returns_string():
     coordinator = SuncloudDataCoordinator(DummyHass(), make_mock_entry())
     result = coordinator._rsa_encrypt("test", "invalidkey===")
     assert isinstance(result, str)
+
 
 def test_aes_encrypt_and_decrypt_roundtrip():
     coordinator = SuncloudDataCoordinator(DummyHass(), make_mock_entry())
@@ -41,9 +46,12 @@ def test_aes_encrypt_and_decrypt_roundtrip():
     decrypted = coordinator._aes_decrypt(encrypted_json, password)
     assert isinstance(decrypted, dict)
     assert decrypted["msg"] == secret
+
+
 def test_aes_decrypt_garbage_returns_none():
     coordinator = SuncloudDataCoordinator(DummyHass(), make_mock_entry())
     assert coordinator._aes_decrypt("nothex", "password") is None
+
 
 def test_build_headers_without_token():
     entry = make_mock_entry(data={"access_key": "foo"})
@@ -53,6 +61,7 @@ def test_build_headers_without_token():
     assert "Content-Type" in headers
     assert headers["x-access-key"] == "foo"
     assert "token" not in headers
+
 
 def test_build_headers_with_token():
     entry = make_mock_entry(data={"access_key": "foo"})
