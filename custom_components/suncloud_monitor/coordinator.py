@@ -52,7 +52,6 @@ class SuncloudDataCoordinator(DataUpdateCoordinator):
         self.hass = hass
         self.config_entry = config_entry
         self.config = config_entry.data
-        self.config_entry = config_entry
         self._points: dict[str, dict[str, Any]] = {}
         self.token = None
         self.ps_id = None
