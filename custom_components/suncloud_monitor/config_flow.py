@@ -145,7 +145,7 @@ class SuncloudOptionsFlow(config_entries.OptionsFlow):
                     ),
                     vol.Optional(
                         "poll_interval",
-                        default=self._entry.options.get("poll_interval", 300)
+                        default=self._entry.options.get("poll_interval", 300),
                     ): int,
                     vol.Optional("repopulate", default=False): bool,
                 }
