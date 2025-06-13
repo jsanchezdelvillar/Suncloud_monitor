@@ -1,21 +1,30 @@
-from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinator
-from unittest.mock import MagicMock
 import json
+import pytest
+from unittest.mock import MagicMock
+
+from custom_components.suncloud_monitor.coordinator import SuncloudDataCoordinator
+
+
+class DummyBus:
+    async def async_listen_once(self, event, callback):
+        """Simulate Home Assistant's bus.listen_once method."""
+        return None
+
+
+class DummyConfig:
+    @staticmethod
+    def path(name):
+        return name
 
 
 class DummyHass:
-    class config:
-        @staticmethod
-        def path(name):
-            return name
-
-    class bus:
-        @staticmethod
-        def async_listen_once(event, callback):
-            pass
+    def __init__(self):
+        self.bus = DummyBus()
+        self.config = DummyConfig()
 
 
 def make_mock_entry(data=None, options=None):
+    """Return a mock ConfigEntry with .data and .options as dicts."""
     mock_entry = MagicMock()
     mock_entry.data = data or {}
     mock_entry.options = options or {}
@@ -69,3 +78,18 @@ def test_build_headers_with_token():
     coordinator.config = entry.data
     headers = coordinator._build_headers("encryptedkey", token="TOKEN")
     assert headers["token"] == "TOKEN"
+
+
+@pytest.mark.asyncio
+async def test_async_start_and_shutdown():
+    """Test async_start registers a shutdown listener, and _on_shutdown removes it."""
+    hass = DummyHass()
+    entry = make_mock_entry()
+    coordinator = SuncloudDataCoordinator(hass, entry)
+
+    await coordinator.async_start()
+    assert coordinator._unsub_stop is not None
+
+    # Trigger shutdown
+    await coordinator._on_shutdown(None)
+    assert coordinator._unsub_stop is None
