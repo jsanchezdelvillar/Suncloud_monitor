@@ -1,5 +1,7 @@
 # 🌞 SunCloud Monitor – Home Assistant Integration
 
+DRAFT, POINT SELECTION NOT WORKING YET!
+
 ![Version](https://img.shields.io/github/v/tag/jsanchezdelvillar/Suncloud_monitor?label=version)
 ![License](https://img.shields.io/github/license/jsanchezdelvillar/Suncloud_monitor)
 ![HACS Custom](https://img.shields.io/badge/HACS-Custom-blue.svg?logo=home-assistant)
